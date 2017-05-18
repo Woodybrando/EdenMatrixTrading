@@ -1,0 +1,19 @@
+# This file allows us to use only *fixed* versions for our dependencies but also for
+# our dependencies' dependencies.
+#
+# If you need to add/update a new dependency:
+# - run: make clean && make
+# - run: source venv/bin/activate
+# - add/update to bottom of file
+# - run: pip install -r requirements.txt
+# - run: pip freeze > requirements.txt
+# - re-add this notice at the top of the file
+
+#hashlib
+#hmac
+#httplib
+#json
+requests
+#time
+#urllib
+yapf
