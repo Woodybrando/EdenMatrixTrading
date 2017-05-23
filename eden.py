@@ -21,16 +21,17 @@
 
 import httplib
 import urllib
-import json
 import hashlib
 import hmac
 import time
 import requests
+from utils import *
 
 # Use these for testing or Replace with your own API key data
-BTC_API_KEY = "4UJ8ZHCW-LIR3CGIJ-Y2GZAQ92-6CQ7W6IB-1WTYSZ98"
-BTC_API_SECRET = "409431dc77f94b5046ff49343a3d24c852fe2b6bbc701162dda002fe03e30e2d"
+# BTC_API_KEY = "4UJ8ZHCW-LIR3CGIJ-Y2GZAQ92-6CQ7W6IB-1WTYSZ98"
+# BTC_API_SECRET = "409431dc77f94b5046ff49343a3d24c852fe2b6bbc701162dda002fe03e30e2d"
 
+config = read_config()
 
 # *******************************************************************************************************
 # ********************************* DEFINE FUNCTIONS *********************************************
@@ -78,12 +79,12 @@ def btce_signed_request(method, params):
     params["method"] = method
     params["nonce"] = int(round(time.time() - 1398621111, 1) * 10)
 
-    h = hmac.new(BTC_API_SECRET, digestmod=hashlib.sha512)
+    h = hmac.new(config["BTCE_API_SECRET"], digestmod=hashlib.sha512)
     h.update(urllib.urlencode(params))
 
     trade_headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Key": BTC_API_KEY,
+        "Key": config["BTCE_API_KEY"],
         "Sign": h.hexdigest(),
     }
 
@@ -196,27 +197,26 @@ def tradehistory(tpair=None):
 
 # WHAT MARKET WOULD YOU LIKE TO TRADE IN: BTC-E, GDAX, POLONIEX
 # PRESS HERE TO LEARN MORE ABOUT EACH EXCHANGE
-# exchange_choice
-exchange_choice = "btc-e.com"
+# exchange_choice = "btc-e.com"
 
 # USER XCHANGE: BTC-E
 
 # WHAT CURRENCY PAIR WOULD YOU LIKE TO TRADE IN
 # USER PAIR Example: LTC/USD
 # tpair
-tpair = "nmc_usd"
+# tpair = "nmc_usd"
 
 
 # BTC-E MARKET FEE
-btc_e_trade_fee = .002
+# btce_trade_fee = .002
 
 # Generate the matrix of pegs (and the corresponding trading state matrix)
-matrix_bottom = 1.4
-matrix_top = 3
-matrix_spread_percent = 1.019
+# matrix_bottom = 1.4
+# matrix_top = 3
+# matrix_spread_percent = 1.019
 
-matrix, matrix_trade_state = generate_matrix(matrix_bottom, matrix_top,
-                                                     matrix_spread_percent, tpair)
+matrix, matrix_trade_state = generate_matrix(config["matrix_bottom"], config["matrix_top"],
+                                                     config["matrix_spread_percent"], config["tpair"])
 
 
 # EDEN open file to record initial purchases and Matrix information
@@ -228,8 +228,9 @@ file = open("/Users/ApplejackFilms-mbp/Documents/Eden-Project/GitHub/Scratch/NMC
 
 # EDEN STORE VALUE: (USER INITIAL INVESTMENT)
 # initial_investment_usd
-initial_investment_usd = 15
-initial_setup_fee = initial_investment_usd * btc_e_trade_fee
+# initial_investment_usd = 15
+initial_investment_usd = config["initial_investment_usd"]
+initial_setup_fee = initial_investment_usd * config["btce_trade_fee"]
 initial_investment_usd -= initial_setup_fee
 
 # EDEN: DISPLAY: "WE WILL CALL THIS YOUR INITIAL INVESTMENT"
@@ -239,8 +240,8 @@ initial_investment_usd -= initial_setup_fee
 # Get Current Market Price
 # ***********************************************************************************************************
 
-if exchange_choice == "btc-e.com":
-    depth = marketdepth(tpair, 5)
+if config["exchange_choice"] == "btc-e.com":
+    depth = marketdepth(config["tpair"], 5)
     if depth is None:
         print "Error connecting to btc-e.com"
         exit(1)
@@ -259,17 +260,17 @@ else:
 # ***********************************************************************************************************
 
 # Moon basket is a long term hold goal (say you want to pay off a credit card, or a car loan, how @ what price would it take)
-# moon_bucket_factor
+# moon_basket_factor
 # example: MOONBASKET FACTOR = .3
 # this is what could be a user defined
-moon_bucket_factor = .3
+# moon_basket_factor = .3
 
-# EDEN CALC: (initial_investment_usd)*(moon_bucket_factor) = (moon_basket_current_market_buy_amount) = 300
+# EDEN CALC: (initial_investment_usd)*(moon_basket_factor) = (moon_basket_current_market_buy_amount) = 300
 # moon_basket_current_market_buy_amount# VANNYCAT AND JAYSON NOT USD!
-moon_basket_current_market_buy_amount = initial_investment_usd * moon_bucket_factor
+moon_basket_current_market_buy_amount = initial_investment_usd * config["moon_basket_factor"]
 
 # Set the price of the Moonbasket Sell to one peg above the matrix
-moon_basket_peg = round_tpair_price((matrix_top * matrix_spread_percent), tpair)
+moon_basket_peg = round_tpair_price((config["matrix_top"] * config["matrix_spread_percent"]), config["tpair"])
 
 
 # you're matrix won, now what do you want to do with your money
@@ -278,7 +279,7 @@ moon_basket_peg = round_tpair_price((matrix_top * matrix_spread_percent), tpair)
 # Uncomment this out when the printout looks good
 # EDEN: (current_tpair_mprice)/(moon_basket_current_market_buy_amount) = (moonbasket_coins_count) 20
 moonbasket_coins_count = moon_basket_current_market_buy_amount / current_tpair_mprice
-moonbasket_coins_count = round_tpair_volume(moonbasket_coins_count, tpair)
+moonbasket_coins_count = round_tpair_volume(moonbasket_coins_count, config["tpair"])
 
 # EDEN: BUY (moonbasket_coins_count) @ (current_tpair_mprice)
 # EDEN: AND CONFIRM TRANSACTION
@@ -288,7 +289,7 @@ file.write("Purchased moonbucket " + str(moonbasket_coins_count) + " coins at pr
 
 # EDEN: SET MOONBASKET GOAL SELLS (moonbasket_coins_count @ one peg above matrix top)
 # EDEN CREATE SELL moonbasket_coins_count @ moon_basket_peg
-trade_success, order_id = trade(tpair, moon_basket_peg, "sell", moonbasket_coins_count)
+trade_success, order_id = trade(config["tpair"], moon_basket_peg, "sell", moonbasket_coins_count)
 file.write("Moonbasket Sell Order established " + str(moonbasket_coins_count) + "coins to sell at price "
            + str(moon_basket_peg) + '\n')
 
@@ -308,12 +309,12 @@ matrix_investment = initial_investment_usd - moon_basket_current_market_buy_amou
 # this gives our sells less volume but more of a spread and great value for selling off new coins
 below_market_buy = matrix_investment * .5
 above_market_buy = matrix_investment * .5
-above_market_coin_count = round_tpair_volume(above_market_buy / current_tpair_mprice, tpair)
+above_market_coin_count = round_tpair_volume(above_market_buy / current_tpair_mprice, config["tpair"])
 number_of_pegs = len(matrix)
 
 starting_tpair_coins = matrix_investment / current_tpair_mprice
 trade_volume = starting_tpair_coins / number_of_pegs
-trade_volume = round_tpair_volume(trade_volume, tpair)
+trade_volume = round_tpair_volume(trade_volume, config["tpair"])
 
 #trade_success, order_id = trade(tpair, current_tpair_mprice, "buy", above_market_coin_count)
 file.write("Initial investment: Purchased " + str(above_market_coin_count) + " coins at price "
@@ -335,8 +336,8 @@ list_counter = 0
 print str(number_of_pegs)
 for peg in matrix:
     if peg < current_tpair_mprice:
-        if (peg * matrix_spread_percent) < current_tpair_mprice:
-            trade(tpair, peg, "buy", trade_volume)
+        if (peg * config["matrix_spread_percent"]) < current_tpair_mprice:
+            trade(config["tpair"], peg, "buy", trade_volume)
             matrix_trade_state[list_counter] = 1
             file.write("Buy " + str(trade_volume) + "Coins at price " + str(peg) + "\n")
         else:
@@ -344,8 +345,8 @@ for peg in matrix:
     elif peg == current_tpair_mprice:
         matrix_trade_state[list_counter] = 0
     else:
-        if (peg - (peg * matrix_spread_percent)) <= current_tpair_mprice:
-            trade(tpair, peg, "sell", trade_volume)
+        if (peg - (peg * config["matrix_spread_percent"])) <= current_tpair_mprice:
+            trade(config["tpair"], peg, "sell", trade_volume)
             matrix_trade_state[list_counter] = 2
             file.write("Sell " + str(trade_volume) + "Coins at price " + str(peg) + "\n")
         else:
