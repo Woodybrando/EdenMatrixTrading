@@ -1,11 +1,12 @@
 {
     "exchange_choice": "btc-e.com",
-    "BTCE_API_KEY": "4UJ8ZHCW-LIR3CGIJ-Y2GZAQ92-6CQ7W6IB-1WTYSZ98",
-    "BTCE_API_SECRET": "409431dc77f94b5046ff49343a3d24c852fe2b6bbc701162dda002fe03e30e2d",
+    "BTCE_API_KEY": "UYW0T4LI-18HNN15R-MD0TI9WW-80LCW6JH-L8XXMHBH",
+    "BTCE_API_SECRET": "e9be480ef7bd2a89a906b96454e110de0ce2bf6b7570c2146b4452ed5e655924",
+    "tpair": "nmc_usd",
     "btce_trade_fee": 0.002,
     "moon_basket_factor": 0.3,
-    "initial_investment_usd": 15,
-    "matrix_bottom": 1.4,
-    "matrix_top": 3,
-    "matrix_spread_percent": 1.019
+    "initial_investment": 14.8,
+    "matrix_spread_percent": 1.019,
+    "matrix_bottom_ratio":0.75,
+    "matrix_top_ratio":1.5
 }
