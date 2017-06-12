@@ -9,11 +9,5 @@
 # - run: pip freeze > requirements.txt
 # - re-add this notice at the top of the file
 
-#hashlib
-#hmac
-#httplib
-#json
 requests
-#time
-#urllib
 yapf

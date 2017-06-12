@@ -8,5 +8,7 @@
     "initial_investment": 14.8,
     "matrix_spread_percent": 1.019,
     "matrix_bottom_ratio":0.75,
-    "matrix_top_ratio":1.5
+    "matrix_top_ratio":1.5,
+    "log_file": "./log.txt",
+    "log_file2222": "/Users/ApplejackFilms-mbp/Documents/Eden-Project/GitHub/Scratch/NMC_USD_Matrix"
 }
