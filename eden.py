@@ -97,7 +97,7 @@ def btce_signed_request(method, params):
     }
 
     response = requests.post(
-        "https://btc-e.com/tapi", headers=trade_headers, data=params)
+        "https://wex.nz/tapi", headers=trade_headers, data=params)
 
     print '[%s] %s %s' % (method, response.status_code, response.reason)
     return response
@@ -107,7 +107,7 @@ def marketdepth(tpair, limit=150):
     """Returns a tuple containing (asks, bids)."""
 
     resp = requests.get(
-        "https://btc-e.com/api/3/depth/" + tpair, params={"limit": limit})
+        "https://wex.nz/api/3/depth/" + tpair, params={"limit": limit})
     if resp.status_code == 200:
         data = resp.json()
         data = data.get(tpair)
@@ -134,6 +134,7 @@ def trade(tpair, rate, ttype, amount):
         order_id = data.get("return", {}).get("order_id")
         return success, order_id
     else:
+        print "Trade function did not return 200 - Error! \n"
         return False, None
 
 
@@ -219,17 +220,17 @@ def tradehistory(tpair=None):
 # Get Current Market Price
 # ***********************************************************************************************************
 
-if config["exchange_choice"] == "btc-e.com":
+if config["exchange_choice"] == "wex.nz":
     depth = marketdepth(config["tpair"], 5)
     if depth is None:
-        print "Error connecting to btc-e.com"
+        print "Error connecting to wex.nz"
         exit(1)
 
     # Debug make sure these asks look appropriate
     current_tpair_mprice = depth[0][4][0]
 
 else:
-    print "We don't have software created for markets other than btc-e yet. Stay tuned!"
+    print "We don't have software created for markets other than wex.nz yet. Stay tuned!"
     current_tpair_mprice = 0
     #exit 1
 
@@ -252,15 +253,14 @@ matrix, matrix_trade_state, matrix_order_id = generate_matrix(matrix_bottom, mat
 
 
 # EDEN open file to record initial purchases and Matrix information
-file = open("/Users/ApplejackFilms-mbp/Documents/Eden-Project/GitHub/Scratch/NMC_USD_Matrix", 'w')
+file = open("/Users/woodybrando/Documents/Eden-Project/GitHub/Scratch/NMC_USD_Matrix", 'w')
 
 
 # WHAT AMOUNT OF FIAT ($, EURO, YUAN, YEN) ARE YOU OKAY WITH GIVING UP FOREVER
 # TO LEARN FROM THIS EXPERIENCE? What is initial investment amount?
 
 # EDEN STORE VALUE: (USER INITIAL INVESTMENT)
-# initial_investment
-# initial_investment = 15
+
 initial_investment = config["initial_investment"]
 initial_setup_fee = initial_investment * config["btce_trade_fee"]
 initial_investment -= initial_setup_fee
@@ -279,30 +279,31 @@ initial_investment -= initial_setup_fee
 # moon_basket_factor = .3
 
 # EDEN CALC: (initial_investment)*(moon_basket_factor) = (moon_basket_current_market_buy_amount) = 300
-# moon_basket_current_market_buy_amount# VANNYCAT AND JAYSON NOT USD!
+
 moon_basket_current_market_buy_amount = initial_investment * config["moon_basket_factor"]
 
 # Set the price of the Moonbasket Sell to one peg above the matrix
 moon_basket_peg = round_tpair_price((matrix_top * config["matrix_spread_percent"]), config["tpair"])
 
 
-# you're matrix won, now what do you want to do with your money
+# your matrix won, now what do you want to do with your money
 
 
 # Uncomment this out when the printout looks good
+# More debug
 # EDEN: (current_tpair_mprice)/(moon_basket_current_market_buy_amount) = (moonbasket_coins_count) 20
 moonbasket_coins_count = moon_basket_current_market_buy_amount / current_tpair_mprice
 moonbasket_coins_count = round_tpair_volume(moonbasket_coins_count, config["tpair"])
 
 # EDEN: BUY (moonbasket_coins_count) @ (current_tpair_mprice)
 # EDEN: AND CONFIRM TRANSACTION
-# trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", moonbasket_coins_count)
+#trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", moonbasket_coins_count)
 file.write("Purchased moonbucket " + str(moonbasket_coins_count) + " coins at price " +
            str(current_tpair_mprice) + "\n")
 
 # EDEN: SET MOONBASKET GOAL SELLS (moonbasket_coins_count @ one peg above matrix top)
 # EDEN CREATE SELL moonbasket_coins_count @ moon_basket_peg
-trade_success, order_id = trade(config["tpair"], moon_basket_peg, "sell", moonbasket_coins_count)
+#trade_success, order_id = trade(config["tpair"], moon_basket_peg, "sell", moonbasket_coins_count)
 file.write("Moonbasket Sell Order established " + str(moonbasket_coins_count) + "coins to sell at price "
            + str(moon_basket_peg) + '\n')
 
@@ -331,7 +332,7 @@ starting_tpair_coins = matrix_investment / current_tpair_mprice
 trade_volume = starting_tpair_coins / number_of_pegs
 trade_volume = round_tpair_volume(trade_volume, config["tpair"])
 
-# trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", above_market_coin_count)
+#trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", above_market_coin_count)
 file.write("Initial investment: Purchased " + str(above_market_coin_count) + " coins at price "
            + str(current_tpair_mprice) + '\n')
 file.write("Trade volume is " + str(trade_volume) + "at each peg")
@@ -354,11 +355,8 @@ order_id = 0
 for peg in matrix:
     if peg < current_tpair_mprice:
         if (peg * config["matrix_spread_percent"]) < current_tpair_mprice:
-            trade_success, order_id = trade(config["tpair"], peg, "buy", trade_volume)
+            #trade_success, order_id = trade(config["tpair"], peg, "buy", trade_volume)
             matrix_trade_state[list_counter] = 1
-            # ----------> DEBUG ONLY NEXT LINE -----------------------------------------------------
-            # order_id = -1
-            # ----------> END DEBUG ONLY ----------------------------------------------------------
             matrix_order_id[list_counter] = order_id
             file.write(str(trade_volume) + "[" + str(peg) + "][" + str(matrix_trade_state[list_counter]) + "]"
                        + "][" + str(matrix_order_id[list_counter]) + "]\n")
@@ -375,11 +373,8 @@ for peg in matrix:
 
     else:
         if (peg - (peg * config["matrix_spread_percent"])) <= current_tpair_mprice:
-            trade_success, order_id = trade(config["tpair"], peg, "sell", trade_volume)
+            #trade_success, order_id = trade(config["tpair"], peg, "sell", trade_volume)
             matrix_trade_state[list_counter] = 2
-            # ----------> DEBUG ONLY NEXT LINE -----------------------------------------------------
-            # order_id = -1
-            # ----------> END DEBUG ONLY ----------------------------------------------------------
             matrix_order_id[list_counter] = order_id
             file.write(str(trade_volume) + "[" + str(peg) + "][" + str(matrix_trade_state[list_counter]) + "]"
                        + "][" + str(matrix_order_id[list_counter]) + "]\n")
@@ -397,20 +392,22 @@ for peg in matrix:
 # SEE LOGIC LOOP TO UNDERSTAND UPDATES
 #------------------------------------------------------------------------------------------------------
 # ----> PUT IN LOOP ---> LOOP ---> PUT IN LOOP --> PUT IN LOOP --> PUT IN LOOP --> PUT IN LOOP
-# time.sleep(60)
+success = 1
+while (success == 1):
+    time.sleep(2)
 
 # Check what the last Order_id was. This was be used as the starting point to look at most recent activity.
-last_order_id = order_id
+    last_order_id = order_id
 
 # Get the new current market price
-last_tpair_mprice = current_tpair_mprice
-depth = marketdepth(config["tpair"], 5)
-if depth is None:
-    print "Error connecting to btc-e.com"
-    exit(1)
+    last_tpair_mprice = current_tpair_mprice
+    depth = marketdepth(config["tpair"], 5)
+    if depth is None:
+        print "Error connecting to btc-e.com"
+        exit(1)
 
 # Debug make sure these asks look appropriate
-current_tpair_mprice = depth[0][4][0]
+    current_tpair_mprice = depth[0][4][0]
 
 #------------------------------------------------------------------------------------------------------
 # EDEN LOGIC LOOP
@@ -425,92 +422,93 @@ current_tpair_mprice = depth[0][4][0]
 # WERE THERE SELLS? (in other words market went high before going low)
 # 2A) YES : then do a) purchase low with all the coins sold and replace those sell pegs
 #            and do b) for all buys, fill in sell pegs at one price higher
-a_orders = activeorders(config["tpair"])
-matrix_has_active_order = [0 for _ in matrix]
-'''
-if a_orders == None:
-    file.write("No active Orders\n")
-else:
+    a_orders = activeorders(config["tpair"])
+    matrix_has_active_order = [0 for _ in matrix]
+#'''
+    if a_orders == None:
+        file.write("No active Orders\n")
+    else:
     # GET THE MATRIX_TRADE_STATES ARRAY UPDATED TO INDICATE
     # 1=HAS BUY ORDER
     # 2=HAS SELL ORDER
     # -1=BOUGHT
     # -2= SOLD
-    for order in a_orders:
-        file.write("Active Order: " + str(order["amount"]) + "[" + str(order["rate"]) + "]["
+        for order in a_orders:
+            file.write("Active Order: " + str(order["amount"]) + "[" + str(order["rate"]) + "]["
                    + str(order["type"]) + "]\n")
-        matrix_peg_index = matrix.index(order["rate"]) if order["rate"] in matrix else None
-        if matrix_peg_index == None:
-            file.write("Active Order outside of Matrix at peg " + str(order["rate"]) + "\n")
-        else:
+            matrix_peg_index = matrix.index(order["rate"]) if order["rate"] in matrix else None
+            if matrix_peg_index == None:
+                file.write("Active Order outside of Matrix at peg " + str(order["rate"]) + "\n")
+            else:
             # LOOPING THROUGH EVERY ACTIVE ORDER, INDICATE YES
             # THERE IS AN ACTIVE ORDER IN THE MATRIX_HAS_ACTIVE_ORDER ARRAY
-            matrix_has_active_order[matrix_peg_index] = 1
+                matrix_has_active_order[matrix_peg_index] = 1
             # ----------> DEBUG -------------------------------------------------------------------
             # IF LOGIC IS WRITE THESE ERRORS WON'T HAPPEN. REMOVE WHEN CODE TESTED SUFFICIENTLY
             # ------------------------------------------------------------------------------------
-            if matrix_trade_state[matrix_peg_index] == 1 & (str(order["type"]) != str("buy")):
-                print "Error trade state of peg " + str(matrix[matrix_peg_index]) + " is not buy \n"
-            if matrix_trade_state[matrix_peg_index] == 2 & (str(order["type"]) != str("sell")):
-                print "Error trade state of peg " + str(matrix[matrix_peg_index]) + " is not sell \n"
+                if matrix_trade_state[matrix_peg_index] == 1 & (str(order["type"]) != str("buy")):
+                    print "Error trade state of peg " + str(matrix[matrix_peg_index]) + " is not buy \n"
+                if matrix_trade_state[matrix_peg_index] == 2 & (str(order["type"]) != str("sell")):
+                    print "Error trade state of peg " + str(matrix[matrix_peg_index]) + " is not sell \n"
 
 
 # FOR ALL PEGS WITH matrix_has_active_order == 0, FILL IN WHETHER THEY WERE BOUGHT OR SOLD
 # BY CHANGING matrix_trade_state TO BE -1 (bought) OR -2 (sold)
-for i in matrix_has_active_order:
-    if matrix_has_active_order[i] == 0:
-        if matrix_trade_state[i] == 1:
-            matrix_trade_state[i] = -1
-        elif matrix_trade_state[i] == 2:
-            matrix_trade_state[i] = -2
-        else:
-            print "Error in the case of Have Active Order at " + str(matrix[i]) + " but trade state is " + str(matrix_trade_state[i]) + "\n"
+    for i in matrix_has_active_order:
+        if matrix_has_active_order[i] == 0:
+            if matrix_trade_state[i] == 1:
+                matrix_trade_state[i] = -1
+            elif matrix_trade_state[i] == 2:
+                matrix_trade_state[i] = -2
+            else:
+                print "Error in the case of Have Active Order at " + str(matrix[i]) + " but trade state is " + str(matrix_trade_state[i]) + "\n"
 
 
 # HERE IS THE REAL LOGIC NOW THAT WE HAVE ALL OUR ACTIVE ORDERS ARRAYS UPDATED TO INDICATE BUYS AND SELLS ....
 
 # FOR A HIGH MARKET............
-if current_tpair_mprice > last_tpair_mprice:
+    if current_tpair_mprice > last_tpair_mprice:
 
     # CHECK IF IT DIPPED DOWN TO DO BUYS ALSO IN THIS TIME INTERVAL OR IF ONLY DID SELLS
     # IF DID DIP, SELL ALL THOSE BUYS AT CURRENT MARKET, THEN PUT THEM IN AS BUY PEGS AGAIN
-    for i in matrix:
-        if matrix_trade_state[i] == -1:
-            trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "sell", trade_volume)
-            trade_success, order_id = trade(config["tpair"], matrix[i], "buy", trade_volume)
-            matrix_trade_state[i] = 1
-            matrix_order_id[i] = order_id
+        for index, price in enumerate(matrix):
+            if matrix_trade_state[index] == -1:
+                trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "sell", trade_volume)
+                trade_success, order_id = trade(config["tpair"], price, "buy", trade_volume)
+                matrix_trade_state[index] = 1
+                matrix_order_id[index] = order_id
 
     # THEN REPLACE ALL SELLS WITH BUYS IN ONE SPOT LOWER
     # -------------> NEED TO ADD CODE TO CHECK THAT THE LOWER SPOT IS OPEN WHICH IT SHOULD BE  ------------
     # ------------> ALSO CODE TO MAKE SURE NO THROWING EXCEPTIONS OF -1 INDEX OR GOING OUT OF MATRIX ------------------
-    for i in matrix:
-        if matrix_trade_state[i] == -2:
-            trade_success, order_id = trade(config["tpair"], matrix[i-1], "buy", trade_volume)
-            matrix_trade_state[i-1] = 1
-            matrix_order_id[i-1] = order_id
+        for index, price in enumerate(matrix):
+            if matrix_trade_state[index] == -2:
+                trade_success, order_id = trade(config["tpair"], matrix[index-1], "buy", trade_volume)
+                matrix_trade_state[index-1] = 1
+                matrix_order_id[index-1] = order_id
 
 # FOR A LOW MARKET...............
-else:
+    else:
     # CHECK IF IT POPPED UP TO ALSO DO SELLS IN THIS TIME INTERVAL OR IF ONLY DID BUYS
     # IF DID POP, BUY THAT MANY AT CURRENT MARKET, THEN PUT THEM IN AS SELL PEGS AGAIN
-    for i in matrix:
-        if matrix_trade_state[i] == -2:
-            trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", trade_volume)
-            trade_success, order_id = trade(config["tpair"], matrix[i], "sell", trade_volume)
-            matrix_trade_state[i] = 2
-            matrix_order_id[i] = order_id
+        for index, price in enumerate(matrix):
+            if matrix_trade_state[index] == -2:
+                trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", trade_volume)
+                trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume)
+                matrix_trade_state[index] = 2
+                matrix_order_id[index] = order_id
 
     # THEN REPLACE ALL BUYS WITH SELLS ONE SPOT HIGHER
     # -------------> NEED TO ADD CODE TO CHECK THAT THE HIGHER SPOT IS OPEN WHICH IT SHOULD BE  ------------
     # ------------> ALSO CODE TO MAKE SURE NO THROWING EXCEPTIONS OF -1 INDEX OR GOIGN OUT OF MATRIX -------------------
-    for i in matrix:
-        if matrix_trade_state[i] == -1:
-            trade_success, order_id = trade(config["tpair"], matrix[i+1], "sell", trade_volume)
-            matrix_trade_state[i+1] = 2
-            matrix_order_id[i+1] = order_id
+        for index, price in enumerate(matrix):
+            if matrix_trade_state[index] == -1:
+                trade_success, order_id = trade(config["tpair"], matrix[index+1], "sell", trade_volume)
+                matrix_trade_state[index+1] = 2
+                matrix_order_id[index+1] = order_id
 
-'''
+    success = 1
+#'''
 '''
 recent_trades = tradehistory(config["tpair"])
 tradenum = 0
