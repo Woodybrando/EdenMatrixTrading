@@ -1,11 +1,11 @@
 {
-    "exchange_choice": "btc-e.com",
-    "BTCE_API_KEY": "UYW0T4LI-18HNN15R-MD0TI9WW-80LCW6JH-L8XXMHBH",
-    "BTCE_API_SECRET": "e9be480ef7bd2a89a906b96454e110de0ce2bf6b7570c2146b4452ed5e655924",
+    "exchange_choice": "wex.nz",
+    "BTCE_API_KEY": "HSS0H8GC-W1AJGMEW-KR38I0RR-KF38PJNJ-2J8V9T9Q",
+    "BTCE_API_SECRET": "dde0628d30890494a0b79db479dda665b88613ab67b427b754bcf9be5cb3c846",
     "tpair": "nmc_usd",
     "btce_trade_fee": 0.002,
     "moon_basket_factor": 0.3,
-    "initial_investment": 14.8,
+    "initial_investment": 12.20,
     "matrix_spread_percent": 1.019,
     "matrix_bottom_ratio":0.75,
     "matrix_top_ratio":1.5
