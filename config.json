@@ -8,5 +8,6 @@
     "initial_investment": 12.20,
     "matrix_spread_percent": 1.019,
     "matrix_bottom_ratio":0.75,
-    "matrix_top_ratio":1.5
+    "matrix_top_ratio":1.5,
+    "output_fdir":"/users/EdenData"
 }
