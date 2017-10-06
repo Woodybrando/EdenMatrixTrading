@@ -1,0 +1,6 @@
+Moonbucket Volume = 2.8944
+Moonbucket Bought Price = 1.262
+Moonbasket Sell Price = 1.93
+Matrix Coins Purchased = 3.3768
+Matrix Coins Price Purchased = 1.262
+Matrix Trade Volume = 0.1777

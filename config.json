@@ -10,5 +10,5 @@
     "matrix_bottom_ratio":0.75,
     "matrix_top_ratio":1.5,
     "matrix_fname":"~/PycharmProjects/EdenMatrixTrading/Matrix.txt",
-    "matrix_log_fname":"~PycharmProjects/EdenMatrixTrading/Matrix_log.txt"
+    "matrix_log_fname":"~/PycharmProjects/EdenMatrixTrading/Matrix_log.txt"
 }
