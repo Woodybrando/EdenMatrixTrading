@@ -9,6 +9,7 @@ def read_config():
         print '%s: %s' % (k, v)
     return config
 
+'''
 class Matrix:
     matrix_filename = ""
     matrixarray = []
@@ -20,7 +21,7 @@ class Matrix:
 
 
     def readFile(self):
-        
+'''
 
 
 # Replace a line in a file.

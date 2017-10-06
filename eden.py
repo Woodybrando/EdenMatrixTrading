@@ -240,12 +240,14 @@ else:
     #exit 1
 
 # Check to see if we are reading in an already created Matrix from Matrix file or if making a new one
-MatrixObject = read_Matrix(config["output_fdir"]+"/Matrix"):
-if MatrixObject[""]
-# We already have our matrix file
-print "Using PreEstablished Matrix\n"
+try:
+    f_matrix = open(config["matrix_fname"])
+    print "Using PreEstablished Matrix\n"
 
-else:
+    f_matrix.close()
+except FileNotFoundError:
+    print('File does not exist')
+
 
 
 # Generate the matrix of pegs (and the corresponding trading state matrix)
@@ -267,10 +269,10 @@ matrix, matrix_trade_state, matrix_order_id = generate_matrix(matrix_bottom, mat
 
 
 # EDEN open file to record initial purchases and Matrix information
-file = open(str(config["output_fdir"]) + "/Matrix_Pair_Data", 'w')
+file = open(str(config["matrix_log"]), 'w')
 
 # EDEN open a file to record the Matrix and keep updating this file to be current as we run
-mfile = open(str(config["output_fdir"]) + "/Matrix", 'w')
+mfile = open(str(config["matrix_fname"]), 'w')
 
 
 # WHAT AMOUNT OF FIAT ($, EURO, YUAN, YEN) ARE YOU OKAY WITH GIVING UP FOREVER
