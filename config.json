@@ -9,6 +9,6 @@
     "matrix_spread_percent": 1.019,
     "matrix_bottom_ratio":0.75,
     "matrix_top_ratio":1.5,
-    "matrix_fname":"~/PycharmProjects/EdenMatrixTrading/Matrix.txt",
-    "matrix_log_fname":"~/PycharmProjects/EdenMatrixTrading/Matrix_log.txt"
+    "matrix_fname":"/Users/vannycat/PycharmProjects/EdenMatrixTrading/Matrix.txt",
+    "matrix_log_fname":"/Users/vannycat/PycharmProjects/EdenMatrixTrading/Matrix_log.txt"
 }
