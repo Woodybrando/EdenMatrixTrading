@@ -222,6 +222,9 @@ def tradehistory(tpair=None):
 matrix_established = 0
 matrix_bottom = -1
 matrix_top = -1
+matrix = []
+matrix_trade_state = []
+matrix_order_id = []
 current_tpair_mprice = -1
 
 # Open a debug file for debug data
@@ -252,28 +255,43 @@ else:
     linenum = 0
     mfile_lines = mfile.readlines()
     for mfile_line in mfile_lines:
-        mfile_line.strip()
-        if linenum == 0:
+        mfile_line.rstrip()
+        if mfile_line.find("[") != -1:
+            mfile_line_parsed = mfile_line.split(",")
+            #debugfile.write("MFILE Line: " + str(mfile_line_parsed) + "\n")
+            debugfile.write("\n")
+            mfile_line_index = int(mfile_line_parsed[0].strip('[]'))
+            debugfile.write("Index:" + str(mfile_line_index) + "\n")
+
+            matrix.append(round_tpair_price(float(mfile_line_parsed[1].strip('[]')),config["tpair"]))
+            debugfile.write("Peg:" + str(matrix[mfile_line_index]) + "\n")
+
+            matrix_trade_state.append(int(mfile_line_parsed[2].strip('[]')))
+            debugfile.write("Trade_state:" + str(matrix_trade_state[mfile_line_index]) + "\n")
+
+            matrix_order_id.append(int(mfile_line_parsed[3].strip('[]\n')))
+            debugfile.write("Peg:" + str(matrix_order_id[mfile_line_index]) + "\n")
+
+
+        elif linenum == 0:
             if mfile_line.find("MARKET_PRICE") != -1:
+                # Needs to be fixed
                 mfile_market_price = mfile_line.split("=")
             else:
                 logfile.write("Error reading Matrix File\n")
                 exit(1)
-        if linenum == 1:
+        elif linenum == 1:
             if mfile_line.find("MATRIX_TRADE_VOLUME") != -1:
-                trade_volume = mfile_line.split("=")[1]
+                trade_volume = mfile_line.split("=")
             else:
                 logfile.write("Error reading Matrix File\n")
                 exit(1)
-
-         # Read in the Matrix
-        #if linenum >= 3:
 
         linenum += 1
 
 
     matrix_established = 1
-
+# End of code to read in Matrix.txt file
 
 
 if matrix_established == 0:
@@ -429,36 +447,36 @@ if matrix_established == 0:
                 #trade_success, order_id = trade(config["tpair"], peg, "buy", trade_volume)
                 matrix_trade_state[list_counter] = 1
                 matrix_order_id[list_counter] = order_id
-                mfile.write("[" + str(list_counter) + "][" + str(peg) + "]["
-                            + str(matrix_trade_state[list_counter]) + "]"
-                           + "][" + str(matrix_order_id[list_counter]) + "]\n")
+                mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
+                            + str(matrix_trade_state[list_counter])
+                           + "],[" + str(matrix_order_id[list_counter]) + "]\n")
             else:
                 matrix_trade_state[list_counter] = 0
                 matrix_order_id[list_counter] = 0
-                mfile.write("[" + str(list_counter) + "][" + str(peg) + "]["
-                            + str(matrix_trade_state[list_counter]) + "]"
-                           + "][" + str(matrix_order_id[list_counter]) + "]\n")
+                mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
+                            + str(matrix_trade_state[list_counter])
+                           + "],[" + str(matrix_order_id[list_counter]) + "]\n")
         elif peg == current_tpair_mprice:
             matrix_trade_state[list_counter] = 0
             matrix_order_id[list_counter] = 0
-            mfile.write("[" + str(list_counter) + "][" + str(peg) + "]["
-                        + str(matrix_trade_state[list_counter]) + "]"
-                       + "][" + str(matrix_order_id[list_counter]) + "]\n")
+            mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
+                        + str(matrix_trade_state[list_counter])
+                       + "],[" + str(matrix_order_id[list_counter]) + "]\n")
 
         else:
             if (peg - (peg * config["matrix_spread_percent"])) <= current_tpair_mprice:
                 #trade_success, order_id = trade(config["tpair"], peg, "sell", trade_volume)
                 matrix_trade_state[list_counter] = 2
                 matrix_order_id[list_counter] = order_id
-                mfile.write("[" + str(list_counter) + "][" + str(peg) + "]["
-                            + str(matrix_trade_state[list_counter]) + "]"
-                           + "][" + str(matrix_order_id[list_counter]) + "]\n")
+                mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
+                            + str(matrix_trade_state[list_counter])
+                           + "],[" + str(matrix_order_id[list_counter]) + "]\n")
             else:
                 matrix_trade_state[list_counter] = 0
                 matrix_order_id[list_counter] = 0
-                mfile.write("[" + str(list_counter) + "][" + str(peg) + "]["
-                            + str(matrix_trade_state[list_counter]) + "]"
-                           + "][" + str(matrix_order_id[list_counter]) + "]\n")
+                mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
+                            + str(matrix_trade_state[list_counter])
+                           + "],[" + str(matrix_order_id[list_counter]) + "]\n")
 
         list_counter += 1
         matrix_established = 1
@@ -522,8 +540,8 @@ while (success == 1):
         # -1=BOUGHT
         # -2= SOLD
         for order in a_orders:
-            logfile.write("Active Order: " + str(order["amount"]) + "[" + str(order["rate"]) + "]["
-                   + str(order["type"]) + "]\n")
+            # logfile.write("Active Order: " + str(order["amount"]) + "[" + str(order["rate"]) + "]["
+            #       + str(order["type"]) + "]\n")
             matrix_peg_index = matrix.index(order["rate"]) if order["rate"] in matrix else None
             if matrix_peg_index == None:
                 logfile.write("Active Order outside of Matrix at peg " + str(order["rate"]) + "\n")
@@ -553,8 +571,7 @@ while (success == 1):
                 # SECTION C2 : THIS IS THE CASE FOR WHEN WE TOOK A BREAK, AND NOW THE MARKET VALUE IS NOT NEAR THE
                 # MATRIX GAP ANYMORE, SO THERE WILL BE ONE WITH NO ACTIVE ORDER THAT HAD A 0 TRADE STATE BC IT WAS OLD GAP
                 # ***************************************************************************************************
-                print "Error in the case of Have Active Order at " + str(matrix[index]) + " but trade state is " + str(matrix_trade_state[index]) + "\n"
-
+                
 
     # HERE IS THE REAL LOGIC NOW THAT WE HAVE ALL OUR ACTIVE ORDERS ARRAYS UPDATED TO INDICATE BUYS AND SELLS ....
 
