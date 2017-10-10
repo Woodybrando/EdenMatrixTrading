@@ -1,1 +1,283 @@
-No Active Order at 1.31 and trade state is 0No Active Order at 1.31 and trade state is 0No Active Order at 1.99 and trade state is -2No Active Order at 1.31 and trade state is 0No Active Order at 1.31 and trade state is 0No Active Order at 1.31 and trade state is 0No Active Order at 1.31 and trade state is 0
+Using PreEstablished Matrix
+MFILE Line: MARKET_PRICE=1.32
+
+MFILE Line: TRADE_VOLUME=0.152
+
+We have linenum is 1MFILE Line: MOON_BASKET_PRICE=2.03
+
+MFILE Line: MATRIX=
+
+MFILE Line: [0],[0.99],[1],[18896257]
+
+
+Index:0
+Peg:0.99
+Trade_state:1
+Order Id:18896257
+MFILE Line: [1],[1.01],[1],[18896268]
+
+
+Index:1
+Peg:1.01
+Trade_state:1
+Order Id:18896268
+MFILE Line: [2],[1.03],[1],[18896273]
+
+
+Index:2
+Peg:1.03
+Trade_state:1
+Order Id:18896273
+MFILE Line: [3],[1.05],[1],[18896278]
+
+
+Index:3
+Peg:1.05
+Trade_state:1
+Order Id:18896278
+MFILE Line: [4],[1.07],[1],[18896293]
+
+
+Index:4
+Peg:1.07
+Trade_state:1
+Order Id:18896293
+MFILE Line: [5],[1.09],[1],[18896304]
+
+
+Index:5
+Peg:1.09
+Trade_state:1
+Order Id:18896304
+MFILE Line: [6],[1.11],[1],[18896311]
+
+
+Index:6
+Peg:1.11
+Trade_state:1
+Order Id:18896311
+MFILE Line: [7],[1.13],[1],[18896313]
+
+
+Index:7
+Peg:1.13
+Trade_state:1
+Order Id:18896313
+MFILE Line: [8],[1.15],[1],[18896314]
+
+
+Index:8
+Peg:1.15
+Trade_state:1
+Order Id:18896314
+MFILE Line: [9],[1.17],[1],[18896329]
+
+
+Index:9
+Peg:1.17
+Trade_state:1
+Order Id:18896329
+MFILE Line: [10],[1.19],[1],[18896338]
+
+
+Index:10
+Peg:1.19
+Trade_state:1
+Order Id:18896338
+MFILE Line: [11],[1.21],[1],[18896341]
+
+
+Index:11
+Peg:1.21
+Trade_state:1
+Order Id:18896341
+MFILE Line: [12],[1.23],[1],[18896344]
+
+
+Index:12
+Peg:1.23
+Trade_state:1
+Order Id:18896344
+MFILE Line: [13],[1.25],[1],[18896348]
+
+
+Index:13
+Peg:1.25
+Trade_state:1
+Order Id:18896348
+MFILE Line: [14],[1.27],[1],[18896352]
+
+
+Index:14
+Peg:1.27
+Trade_state:1
+Order Id:18896352
+MFILE Line: [15],[1.29],[1],[18896362]
+
+
+Index:15
+Peg:1.29
+Trade_state:1
+Order Id:18896362
+MFILE Line: [16],[1.31],[0],[0]
+
+
+Index:16
+Peg:1.31
+Trade_state:0
+Order Id:0
+MFILE Line: [17],[1.33],[2],[18896372]
+
+
+Index:17
+Peg:1.33
+Trade_state:2
+Order Id:18896372
+MFILE Line: [18],[1.36],[2],[18896376]
+
+
+Index:18
+Peg:1.36
+Trade_state:2
+Order Id:18896376
+MFILE Line: [19],[1.39],[2],[18896387]
+
+
+Index:19
+Peg:1.39
+Trade_state:2
+Order Id:18896387
+MFILE Line: [20],[1.42],[2],[18896390]
+
+
+Index:20
+Peg:1.42
+Trade_state:2
+Order Id:18896390
+MFILE Line: [21],[1.45],[2],[18896393]
+
+
+Index:21
+Peg:1.45
+Trade_state:2
+Order Id:18896393
+MFILE Line: [22],[1.48],[2],[18896410]
+
+
+Index:22
+Peg:1.48
+Trade_state:2
+Order Id:18896410
+MFILE Line: [23],[1.51],[2],[18896412]
+
+
+Index:23
+Peg:1.51
+Trade_state:2
+Order Id:18896412
+MFILE Line: [24],[1.54],[2],[18896414]
+
+
+Index:24
+Peg:1.54
+Trade_state:2
+Order Id:18896414
+MFILE Line: [25],[1.57],[2],[18896416]
+
+
+Index:25
+Peg:1.57
+Trade_state:2
+Order Id:18896416
+MFILE Line: [26],[1.6],[2],[18896420]
+
+
+Index:26
+Peg:1.6
+Trade_state:2
+Order Id:18896420
+MFILE Line: [27],[1.63],[2],[18896426]
+
+
+Index:27
+Peg:1.63
+Trade_state:2
+Order Id:18896426
+MFILE Line: [28],[1.66],[2],[18896435]
+
+
+Index:28
+Peg:1.66
+Trade_state:2
+Order Id:18896435
+MFILE Line: [29],[1.69],[2],[18896449]
+
+
+Index:29
+Peg:1.69
+Trade_state:2
+Order Id:18896449
+MFILE Line: [30],[1.72],[2],[18896452]
+
+
+Index:30
+Peg:1.72
+Trade_state:2
+Order Id:18896452
+MFILE Line: [31],[1.75],[2],[18896458]
+
+
+Index:31
+Peg:1.75
+Trade_state:2
+Order Id:18896458
+MFILE Line: [32],[1.78],[2],[18896459]
+
+
+Index:32
+Peg:1.78
+Trade_state:2
+Order Id:18896459
+MFILE Line: [33],[1.81],[2],[18896465]
+
+
+Index:33
+Peg:1.81
+Trade_state:2
+Order Id:18896465
+MFILE Line: [34],[1.84],[2],[18896467]
+
+
+Index:34
+Peg:1.84
+Trade_state:2
+Order Id:18896467
+MFILE Line: [35],[1.87],[2],[18896470]
+
+
+Index:35
+Peg:1.87
+Trade_state:2
+Order Id:18896470
+MFILE Line: [36],[1.91],[2],[18896473]
+
+
+Index:36
+Peg:1.91
+Trade_state:2
+Order Id:18896473
+MFILE Line: [37],[1.95],[2],[18896498]
+
+
+Index:37
+Peg:1.95
+Trade_state:2
+Order Id:18896498
+MFILE Line: [38],[1.99],[2],[10000000]
+
+
+Index:38
+Peg:1.99
+Trade_state:2
+Order Id:10000000
+No Active Order at 1.31 and trade state is 0Error Retrace Order Type:Sell Volume:0.152 Price:0.99
