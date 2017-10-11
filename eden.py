@@ -222,6 +222,7 @@ def tradehistory(tpair=None):
 # SECTION A - INITIALIZATIONS
 # ***********************************************************************************************************
 matrix_established = 0
+matrix_preestablished = 0
 matrix_bottom = -1
 matrix_top = -1
 matrix = []
@@ -268,18 +269,17 @@ else:
 
             if mfile_line.find("[") != -1:
                 mfile_line_parsed = mfile_line.split(",")
-                debugfile.write("\n")
                 mfile_line_index = int(mfile_line_parsed[0].strip('[]'))
-                debugfile.write("Index:" + str(mfile_line_index) + "\n")
+                #debugfile.write("Index:" + str(mfile_line_index) + "\n")
 
                 matrix.append(round_tpair_price(float(mfile_line_parsed[1].strip('[]')),config["tpair"]))
-                debugfile.write("Peg:" + str(matrix[mfile_line_index]) + "\n")
+                #debugfile.write("Peg:" + str(matrix[mfile_line_index]) + "\n")
 
                 matrix_trade_state.append(int(mfile_line_parsed[2].strip('[]')))
-                debugfile.write("Trade_state:" + str(matrix_trade_state[mfile_line_index]) + "\n")
+                #debugfile.write("Trade_state:" + str(matrix_trade_state[mfile_line_index]) + "\n")
 
                 matrix_order_id.append(int(mfile_line_parsed[3].strip('[]\n')))
-                debugfile.write("Order Id:" + str(matrix_order_id[mfile_line_index]) + "\n")
+                #debugfile.write("Order Id:" + str(matrix_order_id[mfile_line_index]) + "\n")
 
 
             elif linenum == 0:
@@ -306,7 +306,7 @@ else:
 
             linenum += 1
             matrix_established = 1
-
+            matrix_preestablished = 1
 # End of code to read in Matrix.txt file
 
 
@@ -530,8 +530,14 @@ while (success == 1):
     time.sleep(2)
     matrix_update_needed = 0
 
+    # First time run through - if there was already a matrix established in a file read in
+    # then the last_tpair_mprice is given there. Then after the first update, we will keep up with
+    # more current tprices
+    if matrix_preestablished != 1:
+        last_tpair_mprice = current_tpair_mprice
+        matrix_preestablished = 0
+
     # Get the new current market price
-    last_tpair_mprice = current_tpair_mprice
     depth = marketdepth(config["tpair"], 5)
     if depth is None:
         print "Error connecting to wex.nz"
@@ -572,19 +578,27 @@ while (success == 1):
         for order in a_orders:
             # logfile.write("Active Order: " + str(order["amount"]) + "[" + str(order["rate"]) + "]["
             #       + str(order["type"]) + "]\n")
-            matrix_peg_index = matrix.index(order["rate"]) if order["rate"] in matrix else None
+
+            rounded_rate = round_tpair_price(order["rate"], config["tpair"])
+            debugfile.write("Rounded rate for order [" + str(rounded_rate) +"]\n")
+            # debug vanny take this out
+            matrix_update_needed = 0
+            success = 0
+            # ********************************
+
             # Ignore the moon_basket_peg
-            if order["rate"] == moon_basket_peg:
+            if rounded_rate == moon_basket_peg:
                 break
-            elif matrix_peg_index == None:
-                debugfile.write("Active Order outside of Matrix at peg " + str(order["rate"]) + "\n")
-                exit(1)
             else:
+                try:
+                    matrix_peg_index = matrix.index(rounded_rate)
+                except:
+                    debugfile.write("Unable to correlate active order with price " + str(rounded_rate) + "to matrix entry\n")
+                    exit(1)
+
                 # LOOPING THROUGH EVERY ACTIVE ORDER, INDICATE YES
                 # THERE IS AN ACTIVE ORDER IN THE MATRIX_HAS_ACTIVE_ORDER ARRAY
                 matrix_has_active_order[matrix_peg_index] = 1
-                matrix_update_needed = 1
-                matrix_file_update_needed = 1
                 # ----------> DEBUG -------------------------------------------------------------------
                 # IF LOGIC IS WRITE THESE ERRORS WON'T HAPPEN. REMOVE WHEN CODE TESTED SUFFICIENTLY
                 # ------------------------------------------------------------------------------------
@@ -594,15 +608,20 @@ while (success == 1):
                 #    print "Error trade state of peg " + str(matrix[matrix_peg_index]) + " is not sell \n"
 
 
-    if matrix_update_needed == 1:
         # FOR ALL PEGS WITH matrix_has_active_order == 0, FILL IN WHETHER THEY WERE BOUGHT OR SOLD
         # BY CHANGING matrix_trade_state TO BE -1 (bought) OR -2 (sold)
         for index, has_order in enumerate(matrix_has_active_order):
             if matrix_has_active_order[index] == 0:
+                matrix_file_update_needed = 1
+                matrix_update_needed = 1
                 if matrix_trade_state[index] == 1:
                     matrix_trade_state[index] = -1
+                    debugfile.write("Updating index[" + str(index) + "] to -1\n")
+
                 elif matrix_trade_state[index] == 2:
                     matrix_trade_state[index] = -2
+                    debugfile.write("Updating index[" + str(index) + "] to -2\n")
+
                 else:
                     # ***************************************************************************************************
                     # SECTION C2 : THIS IS THE CASE FOR WHEN WE TOOK A BREAK, AND NOW THE MARKET VALUE IS NOT NEAR THE
@@ -616,76 +635,86 @@ while (success == 1):
         # SECTION C3 : UPDATE THE MARKET WITH NEW BUYS AND SELLS ACCORDING TO PEGS THAT POPPED
         # ***********************************************************************************************************
         # FOR A HIGH MARKET............
-        if current_tpair_mprice > last_tpair_mprice:
+        if matrix_update_needed:
+            if current_tpair_mprice > last_tpair_mprice:
 
-            # CHECK IF IT DIPPED DOWN TO DO BUYS ALSO IN THIS TIME INTERVAL OR IF ONLY DID SELLS
-            # IF DID DIP, SELL ALL THOSE BUYS AT CURRENT MARKET, THEN PUT THEM IN AS BUY PEGS AGAIN
-            for index, price in enumerate(matrix):
-                if matrix_trade_state[index] == -1:
-                    trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume) # will sell at market
-                    if trade_success != 1:
-                        debugfile.write(
-                            "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(price))
-                        exit(1)
-                    trade_success, order_id = trade(config["tpair"], price, "buy", trade_volume)
-                    if trade_success != 1:
-                        debugfile.write(
-                            "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(price))
-                        exit(1)
-                    matrix_trade_state[index] = 1
-                    matrix_order_id[index] = order_id
+                # CHECK IF IT DIPPED DOWN TO DO BUYS ALSO IN THIS TIME INTERVAL OR IF ONLY DID SELLS
+                # IF DID DIP, SELL ALL THOSE BUYS AT CURRENT MARKET, THEN PUT THEM IN AS BUY PEGS AGAIN
+                for index, price in enumerate(matrix):
+                    if matrix_trade_state[index] == -1:
+                        trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume) # will sell at market
+                        if trade_success != 1:
+                            debugfile.write(
+                                "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(price))
+                            exit(1)
+                        trade_success, order_id = trade(config["tpair"], price, "buy", trade_volume)
+                        if trade_success != 1:
+                            debugfile.write("Broken Index[" + str(index) + "]\n")
+                            debugfile.write(
+                                "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(price))
+                            exit(1)
+                        matrix_trade_state[index] = 1
+                        matrix_order_id[index] = order_id
 
-            # THEN REPLACE ALL SELLS WITH BUYS IN ONE SPOT LOWER
-            # -------------> NEED TO ADD CODE TO CHECK THAT THE LOWER SPOT IS OPEN WHICH IT SHOULD BE  ------------
-            # ------------> ALSO CODE TO MAKE SURE NO THROWING EXCEPTIONS OF -1 INDEX OR GOING OUT OF MATRIX ------------------
-            for index, price in enumerate(matrix):
-                if matrix_trade_state[index] == -2:
-                    trade_success, order_id = trade(config["tpair"], matrix[index-1], "buy", trade_volume)
-                    if trade_success != 1:
-                        debugfile.write(
-                            "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(matrix[index-1]))
-                        exit(1)
-                    matrix_trade_state[index-1] = 1
-                    matrix_trade_state[index] = 0
-                    matrix_order_id[index-1] = order_id
-
-
-        # FOR A LOW MARKET...............
-        else:
-        # CHECK IF IT POPPED UP TO ALSO DO SELLS IN THIS TIME INTERVAL OR IF ONLY DID BUYS
-        # IF DID POP, BUY THAT MANY AT CURRENT MARKET, THEN PUT THEM IN AS SELL PEGS AGAIN
-            for index, price in enumerate(matrix):
-                if matrix_trade_state[index] == -2:
-                    trade_success, order_id = trade(config["tpair"], price, "buy", trade_volume) # will buy at current market
-                    if trade_success != 1:
-                        debugfile.write(
-                            "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(price))
-                        exit(1)
-                    trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume)
-                    if trade_success != 1:
-                        debugfile.write(
-                            "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(price))
-                        exit(1)
-                    matrix_trade_state[index] = 2
-                    matrix_order_id[index] = order_id
+                # THEN REPLACE ALL SELLS WITH BUYS IN ONE SPOT LOWER
+                # -------------> NEED TO ADD CODE TO CHECK THAT THE LOWER SPOT IS OPEN WHICH IT SHOULD BE  ------------
+                # ------------> ALSO CODE TO MAKE SURE NO THROWING EXCEPTIONS OF -1 INDEX OR GOING OUT OF MATRIX ------------------
+                for index, price in enumerate(matrix):
+                    if matrix_trade_state[index] == -2:
+                        trade_success, order_id = trade(config["tpair"], matrix[index-1], "buy", trade_volume)
+                        if trade_success != 1:
+                            debugfile.write(
+                                "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(matrix[index-1]))
+                            exit(1)
+                        matrix_trade_state[index-1] = 1
+                        matrix_trade_state[index] = 0
+                        matrix_order_id[index-1] = order_id
 
 
-        # THEN REPLACE ALL BUYS WITH SELLS ONE SPOT HIGHER
-        # -------------> NEED TO ADD CODE TO CHECK THAT THE HIGHER SPOT IS OPEN WHICH IT SHOULD BE  ------------
-        # ------------> ALSO CODE TO MAKE SURE NO THROWING EXCEPTIONS OF -1 INDEX OR GOIGN OUT OF MATRIX -------------------
-            for index, price in enumerate(matrix):
-                if matrix_trade_state[index] == -1:
-                    trade_success, order_id = trade(config["tpair"], matrix[index+1], "sell", trade_volume)
-                    if trade_success != 1:
-                        debugfile.write(
-                            "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(matrix[index+1]))
-                        exit(1)
-                    matrix_trade_state[index+1] = 2
-                    matrix_trade_state[index] = 0
-                    matrix_order_id[index+1] = order_id
+            # FOR A LOW MARKET...............
+            else:
+            # CHECK IF IT POPPED UP TO ALSO DO SELLS IN THIS TIME INTERVAL OR IF ONLY DID BUYS
+            # IF DID POP, BUY THAT MANY AT CURRENT MARKET, THEN PUT THEM IN AS SELL PEGS AGAIN
+                for index, price in enumerate(matrix):
+                    if matrix_trade_state[index] == -2:
+                        trade_success, order_id = trade(config["tpair"], price, "buy", trade_volume) # will buy at current market
+                        if trade_success != 1:
+                            debugfile.write("Broken Index[" + str(index) + "]\n")
+
+                            debugfile.write(
+                                "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(price))
+                            exit(1)
+                        trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume)
+                        if trade_success != 1:
+                            debugfile.write(
+                                "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(price))
+                            exit(1)
+                        matrix_trade_state[index] = 2
+                        matrix_order_id[index] = order_id
 
 
-    success = 1
+            # THEN REPLACE ALL BUYS WITH SELLS ONE SPOT HIGHER
+            # -------------> NEED TO ADD CODE TO CHECK THAT THE HIGHER SPOT IS OPEN WHICH IT SHOULD BE  ------------
+            # ------------> ALSO CODE TO MAKE SURE NO THROWING EXCEPTIONS OF -1 INDEX OR GOIGN OUT OF MATRIX -------------------
+                for index, price in enumerate(matrix):
+                    if matrix_trade_state[index] == -1:
+                        trade_success, order_id = trade(config["tpair"], matrix[index+1], "sell", trade_volume)
+                        if trade_success != 1:
+                            debugfile.write(
+                                "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(matrix[index+1]))
+                            exit(1)
+                        matrix_trade_state[index+1] = 2
+                        matrix_trade_state[index] = 0
+                        matrix_order_id[index+1] = order_id
+
+    # Check to make sure there are no leftover bought or sold inidices after completing each loop
+    for index, price in enumerate(matrix):
+        if matrix_trade_state[index] == -1:
+            debugfile.write("Error Matrix Trade State[" + str(index) + "] is -1 :")
+            success = 0
+        if matrix_trade_state[index] == -2:
+            debugfile.write("Error Matrix Trade State[" + str(index) + "] is -2 :")
+            success = 0
 
 '''
 recent_trades = tradehistory(config["tpair"])
