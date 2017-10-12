@@ -25,6 +25,7 @@ import hashlib
 import hmac
 import time
 import requests
+import json
 from utils import *
 from shutil import move
 
@@ -165,15 +166,33 @@ def activeorders(tpair=None):
         if data is None:
             return None
 
-        # the data is returned as a dictionary, so we convert it to an array for convenience
-        orders = []
-        for order_id, order_data in data.iteritems():
-            order_data[
-                "order_id"] = order_id  # add the order_id to the returned order data
-            orders.append(order_data)
-        return orders
+
+        tuplelist = []
+        keylist = data.keys()
+
+        for key in keylist:
+            tuple = (data[key]['rate'], data[key]['type'], int(key))
+            #print str(tuple) + "\n"
+            tuplelist.append(tuple)
+
+                # tuplelistrate[num].append(data[key]['rate'])
+
+        j = lambda x: x[0]
+
+        tuplelist.sort(key=j, reverse=False)
+        return tuplelist
     else:
         return None
+
+        # the data is returned as a dictionary, so we convert it to an array for convenience
+#        orders = []
+#        for order_id, order_data in data.iteritems():
+#            order_data[
+#                "order_id"] = order_id  # add the order_id to the returned order data
+#            orders.append(order_data)
+#        return orders
+#    else:
+#        return None
 
 
 def tradehistory(tpair=None):
@@ -231,7 +250,7 @@ matrix_order_id = []
 current_tpair_mprice = -1
 
 # Open a debug file for debug data
-debugfile = open("/Users/vannycat/PycharmProjects/EdenMatrixTrading/debug_log.txt", 'w+')
+debugfile = open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/debug_log.txt", 'w+')
 
 # Open the log file to append
 logfile = open(str(config["matrix_log_fname"]), 'a+')
@@ -563,6 +582,7 @@ while (success == 1):
     # WERE THERE SELLS? (in other words market went high before going low)
     # 2A) YES : then do a) purchase low with all the coins sold and replace those sell pegs
     #            and do b) for all buys, fill in sell pegs at one price higher
+
     a_orders = activeorders(config["tpair"])
     matrix_has_active_order = [0 for _ in matrix]
 
@@ -579,11 +599,11 @@ while (success == 1):
             # logfile.write("Active Order: " + str(order["amount"]) + "[" + str(order["rate"]) + "]["
             #       + str(order["type"]) + "]\n")
 
-            rounded_rate = round_tpair_price(order["rate"], config["tpair"])
+            rounded_rate = round_tpair_price(order[0], config["tpair"])
             debugfile.write("Rounded rate for order [" + str(rounded_rate) +"]\n")
             # debug vanny take this out
-            matrix_update_needed = 0
-            success = 0
+            #matrix_update_needed = 0
+            #success = 0
             # ********************************
 
             # Ignore the moon_basket_peg
