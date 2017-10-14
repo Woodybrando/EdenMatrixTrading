@@ -1,127 +1,256 @@
 Using PreEstablished Matrix
-MFILE Line: MARKET_PRICE=1.23
+MFILE Line: MARKET_PRICE=1.198
 
-MFILE Line: TRADE_VOLUME=0.152
+MFILE Line: MOON_BASKET_PRICE=1.83
 
-We have linenum is 1MFILE Line: MOON_BASKET_PRICE=2.03
+MFILE Line: TRADE_VOLUME=0.1458
 
 MFILE Line: MATRIX=
 
-MFILE Line: [0],[0.99],[1],[18896257]
+MFILE Line: [0],[0.9],[1],[22899658]
 
-MFILE Line: [1],[1.01],[1],[18896268]
+MFILE Line: [1],[0.92],[1],[22899675]
 
-MFILE Line: [2],[1.03],[1],[18896273]
+MFILE Line: [2],[0.94],[1],[22899690]
 
-MFILE Line: [3],[1.05],[1],[18896278]
+MFILE Line: [3],[0.96],[1],[22899696]
 
-MFILE Line: [4],[1.07],[1],[18896293]
+MFILE Line: [4],[0.98],[1],[22899704]
 
-MFILE Line: [5],[1.09],[1],[18896304]
+MFILE Line: [5],[1.0],[1],[22899710]
 
-MFILE Line: [6],[1.11],[1],[18896311]
+MFILE Line: [6],[1.02],[1],[22899729]
 
-MFILE Line: [7],[1.13],[1],[18896313]
+MFILE Line: [7],[1.04],[1],[22899738]
 
-MFILE Line: [8],[1.15],[1],[18896314]
+MFILE Line: [8],[1.06],[1],[22899744]
 
-MFILE Line: [9],[1.17],[1],[18896329]
+MFILE Line: [9],[1.08],[1],[22899758]
 
-MFILE Line: [10],[1.19],[1],[18896338]
+MFILE Line: [10],[1.1],[1],[22899773]
 
-MFILE Line: [11],[1.21],[1],[98989898]
+MFILE Line: [11],[1.12],[1],[22899789]
 
-MFILE Line: [12],[1.23],[0],[18896344]
+MFILE Line: [12],[1.14],[1],[22899797]
 
-MFILE Line: [13],[1.25],[2],[23232323]
+MFILE Line: [13],[1.16],[1],[22899803]
 
-MFILE Line: [14],[1.27],[2],[18896352]
+MFILE Line: [14],[1.18],[1],[11111110]
 
-MFILE Line: [15],[1.29],[2],[21346715]
+MFILE Line: [15],[1.2],[0],[0]
 
-MFILE Line: [16],[1.31],[2],[45454545]
+MFILE Line: [16],[1.22],[0],[0]
 
-MFILE Line: [17],[1.33],[2],[18896372]
+MFILE Line: [17],[1.24],[0],[0]
 
-MFILE Line: [18],[1.36],[2],[18896376]
+MFILE Line: [18],[1.26],[0],[0]
 
-MFILE Line: [19],[1.39],[2],[18896387]
+MFILE Line: [19],[1.28],[2],[22899834]
 
-MFILE Line: [20],[1.42],[2],[18896390]
+MFILE Line: [20],[1.3],[2],[22899863]
 
-MFILE Line: [21],[1.45],[2],[18896393]
+MFILE Line: [21],[1.32],[2],[22899873]
 
-MFILE Line: [22],[1.48],[2],[18896410]
+MFILE Line: [22],[1.35],[2],[22899875]
 
-MFILE Line: [23],[1.51],[2],[18896412]
+MFILE Line: [23],[1.38],[2],[22899884]
 
-MFILE Line: [24],[1.54],[2],[18896414]
+MFILE Line: [24],[1.41],[2],[22899899]
 
-MFILE Line: [25],[1.57],[2],[18896416]
+MFILE Line: [25],[1.44],[2],[22899906]
 
-MFILE Line: [26],[1.6],[2],[18896420]
+MFILE Line: [26],[1.47],[2],[22899915]
 
-MFILE Line: [27],[1.63],[2],[18896426]
+MFILE Line: [27],[1.5],[2],[22899922]
 
-MFILE Line: [28],[1.66],[2],[18896435]
+MFILE Line: [28],[1.53],[2],[22899929]
 
-MFILE Line: [29],[1.69],[2],[18896449]
+MFILE Line: [29],[1.56],[2],[22899938]
 
-MFILE Line: [30],[1.72],[2],[18896452]
+MFILE Line: [30],[1.59],[2],[22899947]
 
-MFILE Line: [31],[1.75],[2],[18896458]
+MFILE Line: [31],[1.62],[2],[22899958]
 
-MFILE Line: [32],[1.78],[2],[18896459]
+MFILE Line: [32],[1.65],[2],[22899969]
 
-MFILE Line: [33],[1.81],[2],[18896465]
+MFILE Line: [33],[1.68],[2],[22899981]
 
-MFILE Line: [34],[1.84],[2],[18896467]
+MFILE Line: [34],[1.71],[2],[22899994]
 
-MFILE Line: [35],[1.87],[2],[18896470]
+MFILE Line: [35],[1.74],[2],[22900000]
 
-MFILE Line: [36],[1.91],[2],[18896473]
+MFILE Line: [36],[1.77],[2],[22900008]
 
-MFILE Line: [37],[1.95],[2],[18896498]
+MFILE Line: [37],[1.8],[2],[22900014]
 
-MFILE Line: [38],[1.99],[2],[10000000]
-
-Rounded rate for order [0.99]
-Rounded rate for order [1.01]
-Rounded rate for order [1.03]
-Rounded rate for order [1.05]
-Rounded rate for order [1.07]
-Rounded rate for order [1.09]
-Rounded rate for order [1.11]
-Rounded rate for order [1.13]
-Rounded rate for order [1.15]
-Rounded rate for order [1.17]
-Rounded rate for order [1.19]
-Rounded rate for order [1.21]
-Rounded rate for order [1.27]
-Rounded rate for order [1.27]
-Rounded rate for order [1.29]
-Rounded rate for order [1.33]
-Rounded rate for order [1.36]
-Rounded rate for order [1.39]
-Rounded rate for order [1.42]
-Rounded rate for order [1.45]
-Rounded rate for order [1.48]
-Rounded rate for order [1.51]
-Rounded rate for order [1.54]
-Rounded rate for order [1.57]
-Rounded rate for order [1.6]
-Rounded rate for order [1.63]
-Rounded rate for order [1.66]
-Rounded rate for order [1.69]
-Rounded rate for order [1.72]
-Rounded rate for order [1.75]
-Rounded rate for order [1.78]
-Rounded rate for order [1.81]
-Rounded rate for order [1.84]
-Rounded rate for order [1.87]
-Rounded rate for order [1.91]
-Rounded rate for order [1.95]
-Rounded rate for order [1.99]
-Rounded rate for order [2.03]
-No Active Order at 1.23 and trade state is 0Updating index[13] to -2
-Updating index[16] to -2
+Current Market : 1.241
+Current Market : 1.241
+Current Market : 1.241
+Current Market : 1.241
+Current Market : 1.241
+Current Market : 1.241
+Current Market : 1.241
+Current Market : 1.24
+Current Market : 1.24
+Current Market : 1.24
+Current Market : 1.24
+Current Market : 1.237
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.234
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.231
+Current Market : 1.234
