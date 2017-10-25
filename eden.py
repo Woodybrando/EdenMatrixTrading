@@ -49,6 +49,8 @@ def round_tpair_price(number, tpair):
         return_number = round(number, 2)
     elif tpair == "eth_btc":
         return_number = round(number, 5)
+    elif tpair == "btc_usd":
+        return_number = round(number, 6)
     else:
         print "ERROR!! Haven't defined round price function for tpair " + tpair
         exit(1)
@@ -62,6 +64,10 @@ def round_tpair_volume(number, tpair):
     elif tpair == "ltc_usd":
         return_number = round(number, 4)
     elif tpair == "eth_btc":
+        return_number = round(number, 4)
+
+    # Could do more than 5 digits for BTC but let's keep at 4 for keeping it simple
+    elif tpair == "btc_usd":
         return_number = round(number, 4)
     else:
         print "ERROR!! Haven't defined round volume function for tpair " + tpair
@@ -224,8 +230,33 @@ def find_matrix_gap_idx(current_price, matrixlist):
     else:
         return gap_idx
 
-def exit_program(rc):
+def write_matrix_file(mfile):
 
+    mfile.write("MARKET_PRICE=" + str(current_tpair_mprice) + "\n")
+    mfile.write("MOON_BASKET_PRICE=" + str(moon_basket_peg) + "\n")
+    mfile.write("TRADE_VOLUME=" + str(trade_volume) + "\n")
+    mfile.write("MATRIX=" + "\n")
+
+    for index, peg in enumerate(matrix):
+            mfile.write("[" + str(index) + "],[" + str(peg) + "],["
+            + str(matrix_trade_state[index])
+           + "],[" + str(matrix_order_id[index]) + "]\n")
+
+
+
+def exit_program(rc, mfile):
+    mfile.close()
+    tempfilename = str(config["matrix_dir"]) + "/matrixtemp.txt"
+    try:
+        tempfile = open(tempfilename, 'w')
+    except error_to_catch:
+        debugfile.write("Error opening Temp Matrix file " + str(tempfilename))
+    else:
+        write_matrix_file(tempfile)
+        move(str(config["matrix_fname"]), str(config["matrix_fname"]) + "_backup")
+        move(tempfilename, str(config["matrix_fname"]))
+        tempfile.close()
+    exit(rc)
 
 # *******************************************************************************************************
 # ********************************* END OF DEFINE FUNCTIONS *********************************************
@@ -492,14 +523,6 @@ if matrix_established == 0:
     # set matrix_trade_state associated to that peg index to 0
     # also store each trade id in matrix_trade_id in index equal to peg index #
     list_counter = 0
-    # ----------------> Set order_id to 0 if debugging
-    order_id = 0
-    write_matrix_file(mfile, )
-    mfile.write("MARKET_PRICE=" + str(current_tpair_mprice) + "\n")
-    mfile.write("MOON_BASKET_PRICE=" + str(moon_basket_peg) + "\n")
-    mfile.write("TRADE_VOLUME=" + str(trade_volume) + "\n")
-
-    mfile.write("MATRIX=" + "\n")
 
     for peg in matrix:
         if peg < current_tpair_mprice:
@@ -510,21 +533,13 @@ if matrix_established == 0:
                     exit(1)
                 matrix_trade_state[list_counter] = 1
                 matrix_order_id[list_counter] = order_id
-                #mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
-                #            + str(matrix_trade_state[list_counter])
-                #           + "],[" + str(matrix_order_id[list_counter]) + "]\n")
             else:
                 matrix_trade_state[list_counter] = 0
                 matrix_order_id[list_counter] = 0
-                #mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
-                #            + str(matrix_trade_state[list_counter])
-                #           + "],[" + str(matrix_order_id[list_counter]) + "]\n")
+
         elif peg == current_tpair_mprice:
             matrix_trade_state[list_counter] = 0
             matrix_order_id[list_counter] = 0
-            #mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
-            #            + str(matrix_trade_state[list_counter])
-            #           + "],[" + str(matrix_order_id[list_counter]) + "]\n")
 
         else:
             if (peg - (peg * config["matrix_spread_percent"])) <= current_tpair_mprice:
@@ -534,21 +549,18 @@ if matrix_established == 0:
                     exit(1)
                 matrix_trade_state[list_counter] = 2
                 matrix_order_id[list_counter] = order_id
-                #mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
-                #            + str(matrix_trade_state[list_counter])
-                #           + "],[" + str(matrix_order_id[list_counter]) + "]\n")
+
             else:
                 matrix_trade_state[list_counter] = 0
                 matrix_order_id[list_counter] = 0
-                #mfile.write("[" + str(list_counter) + "],[" + str(peg) + "],["
-                #            + str(matrix_trade_state[list_counter])
-                #           + "],[" + str(matrix_order_id[list_counter]) + "]\n")
 
         list_counter += 1
         matrix_established = 1
+    # End of Loop to create matrix
 
+    write_matrix_file(mfile, current_tpair_mprice, moon_basket_peg, trade_volume,
+                      matrix, matrix_trade_state, matrix_order_id)
 # End of code to purchase moonbasket, initial invest, and to establish the matrix on WEX
-
 
 # ***********************************************************************************************************
 # SECTION C - EDEN LOGIC - LOOP THROUGH ACTIVE ORDERS AND UPDATE
@@ -563,7 +575,7 @@ if matrix_established == 0:
 success = 1
 matrix_file_update_needed = 0
 
-
+success = 0
 while (success == 1):
     time.sleep(2)
     matrix_update_needed = 0
@@ -813,17 +825,9 @@ while (success == 1):
 
     last_tpair_mprice = current_tpair_mprice
 
+
+
 '''
-recent_trades = tradehistory(config["tpair"])
-tradenum = 0
-for trade in recent_trades:
-
-    print "This is " + str(tradenum)
-    tradenum += 1
-    # ******** Jayson and Vanny - find out how to get at the data in the tradehistory and react accordingly ****
-'''
-
-
 # Update Matrix File if it has Changed
 if matrix_file_update_needed == 1:
     tempfilename = str(config["matrix_dir"]) + "/matrixtemp.txt"
@@ -848,11 +852,16 @@ if matrix_file_update_needed == 1:
         move(str(config["matrix_fname"]), str(config["matrix_fname"]) + "_backup")
         move(tempfilename, str(config["matrix_fname"]))
         tempfile.close()
-
+'''
 # Housekeeping
-mfile.close()
 logfile.close()
 debugfile.close()
+
+# Rewrite Matrix File and Exit Program
+exit_program(0, mfile, last_tpair_mprice, moon_basket_peg,trade_volume,
+             matrix, matrix_trade_state, matrix_order_id)
+
+
 
 # Next to do
 # A daily coin free coin counter
