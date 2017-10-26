@@ -1,8 +1,8 @@
 {
     "exchange_choice": "wex.nz",
-    "BTCE_API_KEY": "",
-    "BTCE_API_SECRET": "",
-    "tpair": "btc_usd",
+    "BTCE_API_KEY": "U8RW47SG-ZSOOGYD5-TV98W1JP-PN4DA15Z-91QMJA3L",
+    "BTCE_API_SECRET": "b84d24c8b57103520a7e41a47cb49a09d7690cc66f05b06c2d0e59e02c900357",
+    "tpair": "nmc_usd",
     "btce_trade_fee": 0.002,
     "moon_basket_factor": 0.3,
     "initial_investment": 35.00,

@@ -219,20 +219,29 @@ def tradehistory(tpair=None):
         return None
 
 def find_matrix_gap_idx(current_price, matrixlist):
+    # type: (object, object) -> object
 
     gap_idx = (np.abs(np.asarray(matrixlist) - current_price)).argmin()
     if gap_idx <= 0:
-        print "Error determining Matrix Gap"
+        debugfile.write("Error determining Matrix Gap")
         exit(1)
     if gap_idx > (len(matrixlist)-1):
-        print "Error determining Matrix Gap"
+        debugfile.write("Error determining Matrix Gap")
         exit(1)
     else:
         return gap_idx
 
 def write_matrix_file(mfile):
 
-    mfile.write("MARKET_PRICE=" + str(current_tpair_mprice) + "\n")
+    # Always get up to date Market Price
+    depth = marketdepth(config["tpair"], 5)
+    if depth is None:
+        debugfile.write("Error connecting to wex.nz\n")
+        mprice = 0
+    else:
+        mprice = depth[0][4][0]
+
+    mfile.write("MARKET_PRICE=" + str(mprice) + "\n")
     mfile.write("MOON_BASKET_PRICE=" + str(moon_basket_peg) + "\n")
     mfile.write("TRADE_VOLUME=" + str(trade_volume) + "\n")
     mfile.write("MATRIX=" + "\n")
@@ -305,11 +314,11 @@ try:
 except error_to_catch:
     debugfile.write(str(config["matrix_fname"]) + " does not exist")
 
- # See if file exists by trying to open for reading, if so then close it and open a write file
+ # Read the Matrix File
 else:
     mfile_lines = mfile.readlines()
     if len(mfile_lines) < 5:
-        # Not really a valid Matrix file. Close teh read handle, and open a writing handle to make Matrix file
+        # Not really a valid Matrix file. Close the read handle, and open a writing handle to make Matrix file
         mfile.close()
         mfile = open(str(config["matrix_fname"]), 'w')
         matrix_established = 0
@@ -317,6 +326,7 @@ else:
         debugfile.write("Using PreEstablished Matrix\n")
 
         # Code to read Matrix File
+        # Can't use exit_rc function in this block because mfile is 'r' not 'w'
         linenum = 0
         for mfile_line in mfile_lines:
             #debugfile.write("MFILE Line: " + str(mfile_line) + "\n")
@@ -362,6 +372,10 @@ else:
             linenum += 1
             matrix_established = 1
             matrix_preestablished = 1
+
+            # Close the Read Handle, Open up a Write Handle
+            mfile.close()
+            mfile = open(str(config["matrix_fname"]), 'w')
 # End of code to read in Matrix.txt file
 
 
@@ -394,9 +408,9 @@ if matrix_established == 0:
         logfile.write("Market price = " + str(current_tpair_mprice) + "\n")
 
     else:
-        print "We don't have software created for markets other than wex.nz yet. Stay tuned!"
+        debugfile.write("We don't have software created for markets other than wex.nz yet. Stay tuned!\n")
         current_tpair_mprice = 0
-        exit (1)
+        exit(1)
 
     # Generate the matrix of pegs (and the corresponding trading state matrix)
     # ------------------------------------------------ WORK TO BE DONE HERE -----------------------------------------
@@ -558,8 +572,7 @@ if matrix_established == 0:
         matrix_established = 1
     # End of Loop to create matrix
 
-    write_matrix_file(mfile, current_tpair_mprice, moon_basket_peg, trade_volume,
-                      matrix, matrix_trade_state, matrix_order_id)
+    write_matrix_file(mfile)
 # End of code to purchase moonbasket, initial invest, and to establish the matrix on WEX
 
 # ***********************************************************************************************************
@@ -571,11 +584,17 @@ if matrix_established == 0:
 # WAIT 30 SECOND INTERVALS TO QUERY MARKET AND UPDATE AT THOSE INTERVALS
 # SEE LOGIC LOOP TO UNDERSTAND UPDATES
 #------------------------------------------------------------------------------------------------------
+
+# This will be done in loop but put here
+
+
 # ----> PUT IN LOOP ---> LOOP ---> PUT IN LOOP --> PUT IN LOOP --> PUT IN LOOP --> PUT IN LOOP
 success = 1
 matrix_file_update_needed = 0
 
-success = 0
+# This turns off the Program to update orders!! Debug Success=0, Run Mode success = 1
+success = 1
+first_pass = 1
 while (success == 1):
     time.sleep(2)
     matrix_update_needed = 0
@@ -631,7 +650,7 @@ while (success == 1):
 
 
     if a_orders == None:
-        logfile.write("No active Orders\n")
+        debugfile.write("No active Orders\n")
         success = 0
     else:
         # UPDATE MATRIX_TRADE_STATE
@@ -659,7 +678,7 @@ while (success == 1):
                     matrix_peg_index = matrix.index(rounded_rate)
                 except:
                     debugfile.write("Unable to correlate active order with price " + str(rounded_rate) + "to matrix entry\n")
-                    exit(1)
+                    exit_program(1, mfile)
 
                 # LOOPING THROUGH EVERY ACTIVE ORDER, INDICATE IF THERE IS A BUY OR SELL THERE
                 if (str(order[1]) == str("buy")):
@@ -668,153 +687,256 @@ while (success == 1):
                     matrix_trade_state[matrix_peg_index] = 2
                 else:
                     debugfile.write("Unknown trade state in Active order State:" + str(order["type"]))
-                    exit(1)
+                    exit_program(1, mfile)
         # ***********************************************************************************************************
         # SECTION C3 : UPDATE THE MARKET WITH NEW BUYS AND SELLS ACCORDING TO PEGS THAT POPPED
         # ***********************************************************************************************************
         # FOR A HIGH MARKET............
         if current_tpair_mprice > last_tpair_mprice:
 
-            # We want the gap index to be above market in this situation
-            if (current_tpair_mprice > matrix[matrix_gap_idx]):
-                matrix_gap_idx += 1
+            # We want the gap index to be below market in this situation
+#            if matrix[matrix_gap_idx] > current_tpair_mprice:
+#                matrix_gap_idx -= 1
 
             # CHECK IF IT DIPPED DOWN TO DO BUYS ALSO IN THIS TIME INTERVAL OR IF ONLY DID SELLS
             # IF DID DIP, SELL ALL THOSE BUYS AT CURRENT MARKET, THEN PUT THEM IN AS BUY PEGS AGAIN
             # This code handles ALL buys
+
+            # -------------------------------------------------------------------------------
+            # --- START If you manually fix the Matrix File before running we don't need to do this
+            # -------------------------------------------------------------------------------
+            # Count how many units were bought down below old market price
+            # This will also fill in the old gap if the gap was below market
+            #  * * * COINS BOUGHT REALLY LOW * * *
+            need_to_sell_trade_volume = 0
+            for index, price in enumerate(matrix):
+                if (price < last_tpair_mprice):
+                    if matrix_trade_state[index] == 0 and index != matrix_gap_idx:
+                        need_to_sell_trade_volume += trade_volume
+                        need_to_sell_price = price
+
+            # Also count to see if any units were sold even higher than new market price
+            # * * * COINS SOLD REALLY HIGH * * *
+            need_to_buy_trade_volume = 0
+            for index, price in enumerate(matrix):
+                if (price > current_tpair_mprice):
+                    if matrix_trade_state[index] == 0 and index != matrix_gap_idx:
+                        need_to_buy_trade_volume += trade_volume
+                        need_to_buy_price = price
+
+            # Only buy/sell the difference of these two
+            if need_to_buy_trade_volume > need_to_sell_trade_volume:
+                need_to_buy_trade_volume = need_to_buy_trade_volume - need_to_sell_trade_volume
+            elif need_to_sell_trade_volume > need_to_buy_trade_volume:
+                need_to_sell_trade_volume = need_to_sell_trade_volume - need_to_buy_trade_volume
+            else:
+                need_to_sell_trade_volume = 0
+                need_to_buy_trade_volume = 0
+
+
+            # If more coins were bought down below OLD market price, then sell these extras,
+            # Debug : 0.1 is supposed ot sell at best price close to market.
+            if need_to_sell_trade_volume > 0:
+                trade_success, order_id = trade(config["tpair"], need_to_sell_price, "sell", need_to_sell_trade_volume)  # will sell at market
+                if trade_success != 1:
+                    debugfile.write(
+                        "Error Retrace Order Type:Sell Volume:" + str(need_to_sell_trade_volume) + " Price:Market\n")
+                    matrix_trade_state[index] = 99
+                    matrix_order_id[index] = 99
+                    exit_program(1, mfile)
+                # Check if the Sell at Market actually happened
+
+            # If more coins were bought high above current new higher market price, then buy these extras,
+            # they end up going back in as sells after we finish the main logic for the higher market case
+            # Debug : 0.1 is supposed ot sell at best price close to market.
+            elif need_to_buy_trade_volume > 0:
+                trade_success, order_id = trade(config["tpair"], need_to_buy_price, "buy", need_to_buy_trade_volume)  # will sell at market
+                if trade_success != 1:
+                    debugfile.write(
+                        "Error Retrace Order Type:Buy Volume:" + str(need_to_buy_trade_volume) + " Price:Market\n")
+                    matrix_trade_state[index] = 99
+                    matrix_order_id[index] = 99
+                    exit_program(1, mfile)
+                    # Check if the Buy at Market actually happened
+
+            # -----------------------------------------------------------------------------------
+            # END  If you manually fix the Matrix File before running we don't need to do this
+            # ----------------------------------------------------------------------------------
+
+            # FILL in ALL OPENS (BOUGHTS) WITH SAME BUYS THAT WERE BELOW LAST MARKET PRICE
+            # * * * COINS BOUGHT REALLY LOW, FILL THEM BACK IN AS IS * * *
             for index, price in enumerate(matrix):
                 if matrix_trade_state[index] == 0:
-                    if matrix_prev_trade_state[index] != 2:
-                        if index == matrix_gap_idx:
-                            break
-                        if matrix[index] < current_tpair_mprice:
-                            trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume) # will sell at market
-                            if trade_success != 1:
-                                debugfile.write(
-                                    "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(price))
-                                exit(1)
-                            trade_success, order_id = trade(config["tpair"], price, "buy", trade_volume)
-                            if trade_success != 1:
-                                debugfile.write("Broken Index[" + str(index) + "]\n")
-                                debugfile.write(
-                                    "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(price))
-                                exit(1)
-                            matrix_trade_state[index] = 1
-                            matrix_order_id[index] = order_id
+                    if price < last_tpair_mprice:
+                        trade_success, order_id = trade(config["tpair"], matrix[index], "buy", trade_volume)
+                        if trade_success != 1:
+                            debugfile.write(
+                                "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(
+                                    matrix[index]))
+                            matrix_trade_state[index] = -99
+                            matrix_order_id[index] = -99
+                            exit_program(1, mfile)
 
-            # THEN REPLACE ALL SELLS WITH BUYS IN ONE SPOT LOWER
-            # -------------> NEED TO ADD CODE TO CHECK THAT THE LOWER SPOT IS OPEN WHICH IT SHOULD BE  ------------
-            # ------------> ALSO CODE TO MAKE SURE NO THROWING EXCEPTIONS OF -1 INDEX OR GOING OUT OF MATRIX ------------------
+                        matrix_trade_state[index] = 1
+                        matrix_order_id[index] = order_id
+
+            # * * * USUAL CASE - SOLD HIGHER, SO BUY ONE LOWER * * *
+            # FILL ALL REST OF OPENS (SOLDS) WITH BUYS UP TO ONE SPOT LOWER THAN MARKET (AKA AT THE GAP)
+            # DONT HAVE TO CHECK FOR GAP BECAUSE THIS WILL NATURALLY PUT A GAP IN RIGHT BELOW CURRENT MARKET
             for index, price in enumerate(matrix):
                 if matrix_trade_state[index] == 0:
                     # This is your typical case! Sold higher, Buy one Lower!
-                    if price < current_tpair_mprice:
-                        if matrix_prev_trade_state[index] == 2:
-                            if index == 0:
-                                debugfile.write("Error Sold at Lowest Matrix Point, Cant reset buy at price: " + str(price))
-                                exit(1)
-                            else:
-                                trade_success, order_id = trade(config["tpair"], matrix[index-1], "buy", trade_volume)
-                                if trade_success != 1:
-                                    debugfile.write(
-                                        "Error Retrace Order Type:Bye Volume:" + str(trade_volume) + " Price:" + str(
-                                            matrix[index-1]))
-                                    exit(1)
-                                matrix_trade_state[index-1] = 1
-                                matrix_order_id[index-1] = order_id
-                    else:
-                        # Buy at market and put in right back as a sell
-                        # These are sells that went and the market is back down below them now, but not down
-                        # lower than last time we checked.
-                        if index == matrix_gap_idx:
-                            matrix_trade_state[index] = 0
-                            break
+                    if price <= current_tpair_mprice:
+                        if index == 0:
+                            debugfile.write("Error Sold at Lowest Matrix Point, Cant reset buy at price: " + str(price))
+                            exit_program(1, mfile)
                         else:
-                            trade_success, order_id = trade(config["tpair"], matrix[index], "buy", trade_volume)
-                            if trade_success != 1:
-                                debugfile.write(
-                                    "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(matrix[index-1]))
-                                exit(1)
-                            trade_success, order_id = trade(config["tpair"], matrix[index], "sell", trade_volume)
+                            trade_success, order_id = trade(config["tpair"], matrix[index-1], "buy", trade_volume)
                             if trade_success != 1:
                                 debugfile.write(
                                     "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(
-                                    matrix[index]))
-                                exit(1)
-                            matrix_trade_state[index] = 2
-                            matrix_order_id[index] = order_id
+                                        matrix[index-1]))
+                                matrix_trade_state[index-1] = -99
+                                matrix_order_id[index-1] = -99
+                                exit_program(1, mfile)
+
+                            matrix_trade_state[index-1] = 1
+                            matrix_order_id[index-1] = order_id
+
+                    # * * * COINS SOLD AT REALLY HIGH, MARKET BACK DOWN, JUST PUT BACK IN * * *
+                    # Then in the case where the market went higher up too before it came back to down to this price
+                    # This can be checked by seeing if there are open slots above current market
+                    # Then we put them back in as sells (we already have enough coins bought to do this)
+                    else:
+                        trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume)
+                        if trade_success != 1:
+                            debugfile.write(
+                                "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(
+                                    price))
+                            matrix_trade_state[index] = 99
+                            matrix_order_id[index] = 99
+                            exit_program(1, mfile)
+
+                        matrix_trade_state[index] = 2
+                        matrix_order_id[index] = order_id
 
 
-            # FOR A LOW MARKET...............
+        # VANNY HERE IS WHERE WE START WORKING AGAIN
+        # FOR A LOW MARKET...............
+        else:
+
+            # We want the gap index to be above market in this situation
+#            if current_tpair_mprice > matrix[matrix_gap_idx]:
+#                matrix_gap_idx += 1
+
+            # -------------------------------------------------------------------------------
+            # --- START If you manually fix the Matrix File before running we don't need to do this
+            # -------------------------------------------------------------------------------
+            # Count to see if any units were bought even lower than new market price
+            # * * * COINS BOUGHT REALLY LOW * * *
+            need_to_sell_trade_volume = 0
+            for index, price in enumerate(matrix):
+                if (price > current_tpair_mprice):
+                    if matrix_trade_state[index] == 0 and index != matrix_gap_idx:
+                        need_to_sell_trade_volume += trade_volume
+                        need_to_sell_price = price
+
+            # Count how many units were sold even above the old market price
+            # * * * COINS SOLD REALLY HIGH * * *
+            need_to_buy_trade_volume = 0
+            for index, price in enumerate(matrix):
+                if (price > last_tpair_mprice):
+                    if matrix_trade_state[index] == 0 and index != matrix_gap_idx:
+                        need_to_buy_trade_volume += trade_volume
+                        need_to_buy_price = price
+
+            # Only buy/sell the difference of these two
+            if need_to_buy_trade_volume > need_to_sell_trade_volume:
+                need_to_buy_trade_volume = need_to_buy_trade_volume - need_to_sell_trade_volume
+            elif need_to_sell_trade_volume > need_to_buy_trade_volume:
+                need_to_sell_trade_volume = need_to_sell_trade_volume - need_to_buy_trade_volume
             else:
+                need_to_sell_trade_volume = 0
+                need_to_buy_trade_volume = 0
 
-                # We want the gap index to be below market in this situation
-                if (current_tpair_price > matrix[matrix_gap_idx]):
-                    matrix_gap_idx -= 1
 
-            # CHECK IF IT POPPED UP TO ALSO DO SELLS IN THIS TIME INTERVAL OR IF ONLY DID BUYS
-            # IF DID POP, BUY THAT MANY AT CURRENT MARKET, THEN PUT THEM IN AS SELL PEGS AGAIN
-                for index, price in enumerate(matrix):
+            # If more coins were sold up above OLD market price, then buy this amount extra,
+            # they end up going back in as sells naturally in the code
+            # Debug : 0.1 is supposed ot buy at best price close to market.
+            if need_to_buy_trade_volume > 0:
+                trade_success, order_id = trade(config["tpair"], need_to_buy_price, "buy", need_to_buy_trade_volume)  # will sell at market
+                if trade_success != 1:
+                    debugfile.write(
+                        "Error Retrace Order Type:Buy Volume:" + str(need_to_buy_trade_volume) + " Price:Market\n")
+                    matrix_trade_state[index] = -99
+                    matrix_order_id[index] = -99
+                    exit_program(1, mfile)
+
+            # If more coins were bought high above current new higher market price, then buy these extras,
+            # they end up going back in as sells after we finish the main logic for the higher market case
+            # Debug : 0.1 is supposed ot sell at best price close to market.
+            elif need_to_sell_trade_volume > 0:
+                trade_success, order_id = trade(config["tpair"], need_to_sell_price, "sell", need_to_sell_trade_volume)  # will sell at market
+                if trade_success != 1:
+                    debugfile.write(
+                        "Error Retrace Order Type:Sell Volume:" + str(need_to_sell_trade_volume) + " Price:Market \n")
+                    matrix_trade_state[index] = 99
+                    matrix_order_id[index] = 99
+                    exit_program(1, mfile)
+
+            # -----------------------------------------------------------------------------------
+            # END  If you manually fix the Matrix File before running we don't need to do this
+            # ----------------------------------------------------------------------------------
+
+            # COINS SOLD REALLY HIGH, PUT BACK IN AS THEY WERE, MARKET BACK DOWN FROM THERE
+            for index, price in enumerate(matrix):
+                if price > last_tpair_mprice:
                     if matrix_trade_state[index] == 0:
-                        if price > current_tpair_mprice:
-                            if index == matrix_gap_idx:
-                                break
-                            elif matrix_prev_trade_state[index] != 1:
-                                trade_success, order_id = trade(config["tpair"], price, "buy", trade_volume) # will buy at current market
-                                if trade_success != 1:
-                                    debugfile.write("Broken Index[" + str(index) + "]\n")
+                        trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume)
+                        if trade_success != 1:
+                            debugfile.write(
+                                "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(
+                                        price))
+                            matrix_trade_state[index] = 99
+                            matrix_order_id[index] = 99
+                            exit_program(1, mfile)
 
-                                    debugfile.write(
-                                        "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(price))
-                                    exit(1)
-                                trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume)
-                                if trade_success != 1:
-                                    debugfile.write(
-                                        "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(price))
-                                    exit(1)
-                                matrix_trade_state[index] = 2
-                                matrix_order_id[index] = order_id
-
+                        matrix_trade_state[index] = 2
+                        matrix_order_id[index] = order_id
 
                 # THEN REPLACE ALL BUYS WITH SELLS ONE SPOT HIGHER
-                # -------------> NEED TO ADD CODE TO CHECK THAT THE HIGHER SPOT IS OPEN WHICH IT SHOULD BE  ------------
-                # ------------> ALSO CODE TO MAKE SURE NO THROWING EXCEPTIONS OF -1 INDEX OR GOIGN OUT OF MATRIX -------------------
                 for index, price in enumerate(matrix):
                     if matrix_trade_state[index] == 0:
                         # Here is our typical case. Bought a little lower, let's sell one higher!
-                        if price > current_tpair_mprice:
-                            if matrix_prev_trade_state[index] == 1:
+                        if price >= current_tpair_mprice:
                                 if (index + 1) > (len(matrix)-1):
                                     debugfile.write("Error, Trying to Sell outside of our Matrix above Price:" + str(matrix[index]))
-                                    exit(1)
+                                    exit_program(1, mfile)
                                 else:
                                     trade_success, order_id = trade(config["tpair"], matrix[index+1], "sell", trade_volume)
                                     if trade_success != 1:
                                         debugfile.write(
                                             "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(
                                                 matrix[index+1]))
-                                        exit(1)
+                                        matrix_trade_state[index+1] = 99
+                                        matrix_order_id[index+1] = 99
+                                        exit_program(1,mfile)
+
                                     matrix_order_id[index+1] = order_id
                                     soldup_indexes.append(index+1)
 
                         # If they were buys lower Then current price, go ahead and
                         # sell at market and put back in as buys as the same prices
                         else:
-                            if matrix_prev_trade_state[index] == 1:
-                                trade_success, order_id = trade(config["tpair"], matrix[index], "sell", trade_volume)
-                                if trade_success != 1:
-                                    debugfile.write(
-                                        "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(
-                                            matrix[index]))
-                                    exit(1)
-                                trade_success, order_id = trade(config["tpair"], matrix[index], "buy", trade_volume)
-                                if trade_success != 1:
-                                    debugfile.write(
-                                        "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(
-                                            matrix[index]))
-                                    exit(1)
-                                matrix_trade_state[index] = 1
-                                matrix_order_id[index] = order_id
+                            trade_success, order_id = trade(config["tpair"], matrix[index], "buy", trade_volume)
+                            if trade_success != 1:
+                                debugfile.write(
+                                    "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(
+                                        matrix[index]))
+                                exit_program(1, mfile)
+
+                            matrix_trade_state[index] = 1
+                            matrix_order_id[index] = order_id
 
                 # We couldn't reset the trade_state pegs to Sells above in order to not break looping on the
                 # next peg, so we do it here in this extra littel loop (otherwise we could loop backwards through
@@ -825,41 +947,15 @@ while (success == 1):
 
     last_tpair_mprice = current_tpair_mprice
 
+# End of Action Bot Loop acting on active orders
 
 
-'''
-# Update Matrix File if it has Changed
-if matrix_file_update_needed == 1:
-    tempfilename = str(config["matrix_dir"]) + "/matrixtemp.txt"
-    try:
-        tempfile = open(tempfilename, 'w')
-    except error_to_catch:
-        debugfile.write("Error opening Temp Matrix file " + str(tempfilename))
-    else:
-
-        debugfile.write("Opening file named "+ str(tempfilename))
-        tempfile.write("MARKET_PRICE=" + str(current_tpair_mprice) + "\n")
-        tempfile.write("TRADE_VOLUME=" + str(trade_volume) + "\n")
-        tempfile.write("MOON_BASKET_PRICE=" + str(moon_basket_peg) + "\n")
-        tempfile.write("MATRIX=\n")
-
-        # Code to Rewrite Matrix File
-        for index, value in enumerate(matrix):
-            tempfile.write("[" + str(index) + "],[" + str(value) + "],["
-                        + str(matrix_trade_state[index])
-                         + "],[" + str(matrix_order_id[index]) + "]\n")
-
-        move(str(config["matrix_fname"]), str(config["matrix_fname"]) + "_backup")
-        move(tempfilename, str(config["matrix_fname"]))
-        tempfile.close()
-'''
 # Housekeeping
 logfile.close()
 debugfile.close()
 
 # Rewrite Matrix File and Exit Program
-exit_program(0, mfile, last_tpair_mprice, moon_basket_peg,trade_volume,
-             matrix, matrix_trade_state, matrix_order_id)
+exit_program(0, mfile)
 
 
 
@@ -874,3 +970,7 @@ exit_program(0, mfile, last_tpair_mprice, moon_basket_peg,trade_volume,
 # NMC for their initial investment
 # They can now sell 6 coins without affecting their
 # initial investment
+
+# Another to do
+# A GUI, lets you quit program manually and will call exit_program so closes up with housecleaning
+# instead of a kill
