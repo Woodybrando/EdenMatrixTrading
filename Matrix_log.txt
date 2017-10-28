@@ -1,1 +1,1 @@
-Market price = 1.136
+Market price = 1.118
