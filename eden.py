@@ -31,10 +31,6 @@ from utils import *
 from shutil import move
 
 
-# Use these for testing or Replace with your own API key data
-# BTC_API_KEY = "4UJ8ZHCW-LIR3CGIJ-Y2GZAQ92-6CQ7W6IB-1WTYSZ98"
-# BTC_API_SECRET = "409431dc77f94b5046ff49343a3d24c852fe2b6bbc701162dda002fe03e30e2d"
-
 config = read_config()
 
 # *******************************************************************************************************
@@ -299,7 +295,7 @@ current_tpair_mprice = -1
 debugfile = open("/Users/vannycat/PycharmProjects/EdenMatrixTrading/debug_log.txt", 'w+')
 
 # Open the log file to append
-logfile = open(str(config["matrix_log_fname"]), 'a+')
+logfile = open(str(config["matrix_log_fname"]), 'w')
 
 # Check to see if we are reading in an already created Matrix from Matrix file or if making a new one
 # If a Matrix.txt with valid data exists, then we already have a Matrix on the market.
