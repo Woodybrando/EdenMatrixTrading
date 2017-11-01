@@ -25,6 +25,7 @@ import hashlib
 import hmac
 import time
 import requests
+import math
 import json
 import numpy as np
 from utils import *
@@ -42,6 +43,8 @@ def round_tpair_price(number, tpair):
     if tpair == "nmc_usd":
         return_number = round(number, 2)
     elif tpair == "ltc_usd":
+        return_number = round(number, 3)
+    elif tpair == "ppc_usd":
         return_number = round(number, 2)
     elif tpair == "eth_btc":
         return_number = round(number, 5)
@@ -57,6 +60,8 @@ def round_tpair_volume(number, tpair):
     return_number = 0
     if tpair == "nmc_usd":
         return_number = round(number, 4)
+    elif tpair == "ppc_usd":
+        return_number = round(number, 3)
     elif tpair == "ltc_usd":
         return_number = round(number, 4)
     elif tpair == "eth_btc":
@@ -69,6 +74,26 @@ def round_tpair_volume(number, tpair):
         print "ERROR!! Haven't defined round volume function for tpair " + tpair
         exit(1)
     return return_number
+
+def round_down_tpair_volume(number, tpair):
+    return_number = 0
+    if tpair == "nmc_usd":
+        return_number = math.floor(10000*round(number, 4))/10000
+    elif tpair == "ppc_usd":
+        return_number = math.floor(1000*round(number, 3))/1000
+    elif tpair == "ltc_usd":
+        return_number = math.floor(10000*round(number, 4))/10000
+    elif tpair == "eth_btc":
+        return_number = math.floor(10000*round(number, 4))/10000
+
+    # Could do more than 5 digits for BTC but let's keep at 4 for keeping it simple
+    elif tpair == "btc_usd":
+        return_number = math.floor(10000*round(number, 4))/10000
+    else:
+        print "ERROR!! Haven't defined round down volume function for tpair " + tpair
+        exit(1)
+    return return_number
+
 
 
 def generate_matrix(start, end, percentage, tpair):
@@ -276,8 +301,6 @@ def exit_program(rc, mfile):
 # USER PAIR Example: LTC/USD
 # tpair = "ltc_usd" or "nmc_btc"
 
-# BTC-E MARKET FEE
-# btce_trade_fee = .002
 
 # ***********************************************************************************************************
 # SECTION A - INITIALIZATIONS
@@ -290,6 +313,7 @@ matrix = []
 matrix_trade_state = []
 matrix_order_id = []
 current_tpair_mprice = -1
+dont_trade = 0
 
 # Open a debug file for debug data
 debugfile = open("/Users/vannycat/PycharmProjects/EdenMatrixTrading/debug_log.txt", 'w+')
@@ -436,7 +460,7 @@ if matrix_established == 0:
     logfile = open(str(config["matrix_log_fname"]), 'w')
 
     initial_investment = config["initial_investment"]
-    initial_setup_fee = initial_investment * config["btce_trade_fee"]
+    initial_setup_fee = initial_investment * config["wex_trade_fee"]
     initial_investment -= initial_setup_fee
 
     # EDEN: DISPLAY: "WE WILL CALL THIS YOUR INITIAL INVESTMENT"
@@ -455,6 +479,7 @@ if matrix_established == 0:
     # EDEN CALC: (initial_investment)*(moon_basket_factor) = (moon_basket_current_market_buy_amount) = 300
 
     moon_basket_current_market_buy_amount = initial_investment * config["moon_basket_factor"]
+    moon_basket_trade_fee = moon_basket_current_market_buy_amount * config["wex_trade_fee"]
 
     # Set the price of the Moonbasket Sell to one peg above the matrix
     moon_basket_peg = round_tpair_price((matrix_top * config["matrix_spread_percent"]), config["tpair"])
@@ -469,22 +494,28 @@ if matrix_established == 0:
 
     # EDEN: BUY (moonbasket_coins_count) @ (current_tpair_mprice)
     # EDEN: AND CONFIRM TRANSACTION
-    trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", moonbasket_coins_count)
-    if trade_success != 1:
-        debugfile.write("Error Purchasing Moonbasket Coins (" + str(moonbasket_coins_count) + ")")
-        exit(1)
-    logfile.write("Moonbasket Volume = " + str(moonbasket_coins_count) + "\n")
-    logfile.write("Moonbasket Bought Price = " + str(current_tpair_mprice) + "\n")
+    if dont_trade != 1:
+        trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", moonbasket_coins_count)
+        if trade_success != 1:
+            debugfile.write("Error Purchasing Moonbasket Coins (" + str(moonbasket_coins_count) + ")")
+            exit(1)
+        logfile.write("Moonbasket Volume = " + str(moonbasket_coins_count) + "\n")
+        logfile.write("Moonbasket Bought Price = " + str(current_tpair_mprice) + "\n")
+
+    # Subtract the trade Fee paid on teh Moonbasket Purchase
+    moonbasket_coins_count = (moon_basket_current_market_buy_amount - moon_basket_trade_fee) / current_tpair_mprice
+    moonbasket_coins_count = round_down_tpair_volume(moonbasket_coins_count, config["tpair"])
 
 
     # EDEN: SET MOONBASKET GOAL SELLS (moonbasket_coins_count @ one peg above matrix top)
     # EDEN CREATE SELL moonbasket_coins_count @ moon_basket_peg
-    trade_success, order_id = trade(config["tpair"], moon_basket_peg, "sell", moonbasket_coins_count)
-    if trade_success != 1:
-        debugfile.write("Error Creating Moonbasket Sale Order, Coins(" + str(moonbasket_coins_count) +
-                        ") Price(" + str(moon_basket_peg) + ")")
-        exit(1)
-    logfile.write("Moonbasket Sell Price = " + str(moon_basket_peg) + '\n')
+    if dont_trade != 1:
+        trade_success, order_id = trade(config["tpair"], moon_basket_peg, "sell", moonbasket_coins_count)
+        if trade_success != 1:
+            debugfile.write("Error Creating Moonbasket Sale Order, Coins(" + str(moonbasket_coins_count) +
+                            ") Price(" + str(moon_basket_peg) + ")")
+            exit(1)
+        logfile.write("Moonbasket Sell Price = " + str(moon_basket_peg) + '\n')
 
 
     #############################################################################################################
@@ -508,13 +539,14 @@ if matrix_established == 0:
     # CODE AND ADJUST ACCORDINGLY
     starting_tpair_coins = matrix_investment / current_tpair_mprice
     trade_volume = starting_tpair_coins / number_of_pegs
-    trade_volume = round_tpair_volume(trade_volume, config["tpair"])
+    trade_volume = round_down_tpair_volume(trade_volume, config["tpair"])
 
-    trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", above_market_coin_count)
-    if trade_success != 1:
-        debugfile.write("Error Purchasing Matrix Investment Coins(" + str(above_market_coin_count) + ") Price(" +
-                str(current_tpair_mprice) + ")\n" )
-        exit(1)
+    if (dont_trade != 1):
+        trade_success, order_id = trade(config["tpair"], current_tpair_mprice, "buy", above_market_coin_count)
+        if trade_success != 1:
+            debugfile.write("Error Purchasing Matrix Investment Coins(" + str(above_market_coin_count) + ") Price(" +
+                    str(current_tpair_mprice) + ")\n" )
+            exit(1)
     logfile.write("Matrix Coins Purchased = " + str(above_market_coin_count) + "\n")
     logfile.write("Matrix Coins Price Purchased = " + str(current_tpair_mprice) + '\n')
     logfile.write("Matrix Trade Volume = " + str(trade_volume) + "\n")
@@ -535,14 +567,16 @@ if matrix_established == 0:
     # set matrix_trade_state associated to that peg index to 0
     # also store each trade id in matrix_trade_id in index equal to peg index #
     list_counter = 0
+    order_id = 99
 
     for peg in matrix:
         if peg < current_tpair_mprice:
             if (peg * config["matrix_spread_percent"]) < current_tpair_mprice:
-                trade_success, order_id = trade(config["tpair"], peg, "buy", trade_volume)
-                if trade_success != 1:
-                    debugfile.write("Error Matrix Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(peg))
-                    exit(1)
+                if (dont_trade != 1):
+                    trade_success, order_id = trade(config["tpair"], peg, "buy", trade_volume)
+                    if trade_success != 1:
+                        debugfile.write("Error Matrix Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(peg))
+                        exit(1)
                 matrix_trade_state[list_counter] = 1
                 matrix_order_id[list_counter] = order_id
             else:
@@ -555,10 +589,11 @@ if matrix_established == 0:
 
         else:
             if (peg - (peg * config["matrix_spread_percent"])) <= current_tpair_mprice:
-                trade_success, order_id = trade(config["tpair"], peg, "sell", trade_volume)
-                if trade_success != 1:
-                    debugfile.write("Error Matrix Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(peg))
-                    exit(1)
+                if (dont_trade != 1):
+                    trade_success, order_id = trade(config["tpair"], peg, "sell", trade_volume)
+                    if trade_success != 1:
+                        debugfile.write("Error Matrix Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(peg))
+                        exit(1)
                 matrix_trade_state[list_counter] = 2
                 matrix_order_id[list_counter] = order_id
 
@@ -595,8 +630,11 @@ success = 1
 matrix_file_update_needed = 0
 
 # This turns off the Program to update orders!! Debug Success=0, Run Mode success = 1
-success = 1
-first_pass = 1
+if (dont_trade == 1):
+    success = 0
+else:
+    success = 1
+
 while (success == 1):
 
     time.sleep(2)
@@ -724,11 +762,11 @@ while (success == 1):
                         need_to_sell_trade_volume += trade_volume
                         need_to_sell_price = price
 
-            # Also count to see if any units were sold even higher than new market price
+            # Also count to see if any units were sold even higher than new market price by one whole peg or more
             # * * * COINS SOLD REALLY HIGH * * *
             need_to_buy_trade_volume = 0
             for index, price in enumerate(matrix):
-                if (price > current_tpair_mprice):
+                if (price > current_tpair_mprice and index != 0 and matrix[index-1] >= current_tpair_mprice):
                     if matrix_trade_state[index] == 0 and index != matrix_gap_idx:
                         need_to_buy_trade_volume += trade_volume
                         need_to_buy_price = price
@@ -793,7 +831,7 @@ while (success == 1):
 
             # For all empty spots way up above even current market price
             for index, price in enumerate(matrix):
-                if matrix_trade_state[index] == 0 and price > current_tpair_mprice:
+                if matrix_trade_state[index] == 0 and price > current_tpair_mprice and index != 0 and matrix[index-1] >= current_tpair_mprice:
 
                     # * * * COINS SOLD AT REALLY HIGH, MARKET BACK DOWN, JUST PUT BACK IN * * *
                     # Then in the case where the market went higher up too before it came back to down to this price
@@ -824,7 +862,8 @@ while (success == 1):
                     if index == 0:
                         debugfile.write("Error Sold at Lowest Matrix Point, Cant reset buy at price: " + str(price))
                         exit_program(1, mfile)
-                    elif index != last_matrix_gap_idx:
+                    # As long as this isn't the old gap
+                    elif matrix_trade_state[index-1] == 0:
                         trade_success, order_id = trade(config["tpair"], matrix[index-1], "buy", trade_volume)
                         if trade_success != 1:
                             debugfile.write(
@@ -848,11 +887,11 @@ while (success == 1):
             # -------------------------------------------------------------------------------
             # --- START If you manually fix the Matrix File before running we don't need to do this
             # -------------------------------------------------------------------------------
-            # Count to see if any units were bought even lower than new market price
+            # Count to see if any units were bought even lower (by one whole peg) than new market price
             # * * * COINS BOUGHT REALLY LOW * * *
             need_to_sell_trade_volume = 0
             for index, price in enumerate(matrix):
-                if (price < current_tpair_mprice):
+                if (price < current_tpair_mprice and index < len(matrix) -1 and matrix[index+1] <= current_tpair_mprice):
                     if matrix_trade_state[index] == 0 and index != matrix_gap_idx:
                         need_to_sell_trade_volume += trade_volume
                         need_to_sell_price = price
@@ -923,10 +962,10 @@ while (success == 1):
                         matrix_order_id[index] = order_id
 
 
-            # If they were buys lower Then current price, go ahead and
+            # If they were buys lower by one whole peg or more below the current price, go ahead and
             # put back in as buys as the same prices
             for index, price in enumerate(matrix):
-                if matrix_trade_state[index] == 0 and price < current_tpair_mprice:
+                if matrix_trade_state[index] == 0 and price < current_tpair_mprice and matrix[index+1] <= current_tpair_mprice:
                     if index != matrix_gap_idx:
                         trade_success, order_id = trade(config["tpair"], matrix[index], "buy", trade_volume)
                         if trade_success != 1:
@@ -942,11 +981,12 @@ while (success == 1):
             # Here is our typical case. Bought a little lower, let's sell one higher!
             for index, price in enumerate(matrix):
 
-                if matrix_trade_state[index] == 0 and index != last_matrix_gap_idx:
+                if matrix_trade_state[index] == 0:
                     if (index + 1) > (len(matrix)-1):
                         debugfile.write("Error, Trying to Sell outside of our Matrix above Price:" + str(matrix[index]))
                         exit_program(1, mfile)
-                    else:
+                    # As long as that wasn't the old Gap
+                    elif (matrix_trade_state[index+1] == 0):
                         trade_success, order_id = trade(config["tpair"], matrix[index+1], "sell", trade_volume)
                         if trade_success != 1:
                             debugfile.write(
