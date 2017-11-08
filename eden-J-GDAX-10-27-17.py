@@ -295,6 +295,8 @@ def exit_program(rc, mfile):
 # ***********************************************************************************************************
 # SECTION A - INITIALIZATIONS
 # ***********************************************************************************************************
+
+
 matrix_established = 0
 matrix_preestablished = 0
 matrix_bottom = -1
@@ -306,7 +308,7 @@ matrix_order_id = []
 current_tpair_mprice = -1
 matrix_CSV = []
 trade_success = 1
-order_id = 999
+order_id = "BTC_USD"
 
 # Open a debug file for debug data
 debugfile = open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/debug_log.txt", 'w+')
@@ -562,7 +564,7 @@ if matrix_established == 0:
                 if trade_success != 1:
                     debugfile.write("Error Matrix Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(peg))
                     exit(1)
-                matrix_trade_state[list_counter] = 1
+                matrix_trade_state[list_counter] = "buy"
                 matrix_order_id[list_counter] = order_id
             else:
                 matrix_trade_state[list_counter] = 0
@@ -578,7 +580,7 @@ if matrix_established == 0:
                 if trade_success != 1:
                     debugfile.write("Error Matrix Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(peg))
                     exit(1)
-                matrix_trade_state[list_counter] = 2
+                matrix_trade_state[list_counter] = "sell"
                 matrix_order_id[list_counter] = order_id
 
             else:
@@ -596,6 +598,23 @@ if matrix_established == 0:
 
     write_matrix_file(mfile)
     write_matrix_CSV(mCSV)
+
+
+# Place Matrix orders
+
+
+
+
+order = {
+    'size': 1.0,
+    'price': 1.0,
+    'side': 'buy',
+    'product_id': 'BTC-USD',
+}
+r = requests.post(api_url + 'orders', json=order, auth=auth)
+
+
+
 
 # End of code to purchase moonbasket, initial invest, and to establish the matrix on WEX
 

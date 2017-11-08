@@ -1,0 +1,86 @@
+import csv
+
+
+pegs = []
+volumes = []
+tstates = []
+
+
+'''
+matrixDict =
+
+{
+
+    {
+    "orderDict0":
+        {
+        "size": "0.01",
+        "price": "0.100",
+        "side": "buy",
+        "product_id": "LTC-USD"
+        }
+    }
+
+    {
+    "orderDict1":
+        {
+        "size": "0.01",
+        "price": "0.100",
+        "side": "buy",
+        "product_id": "BTC-USD"
+        }
+    }
+
+    {
+    "orderDict2":
+        {
+        "size": "0.01",
+        "price": "0.100",
+        "side": "buy",
+        "product_id": "BTC-USD"
+        }
+    }
+    {
+    "orderDict3": {
+        "size": "0.01",
+        "price": "0.100",
+        "side": "buy",
+        "product_id": "BTC-USD"
+    }
+
+    {
+    "orderDict4":
+        {
+        "size": "0.01",
+        "price": "0.100",
+        "side": "buy",
+        "product_id": "BTC-USD"
+        }
+    }
+}
+
+
+
+print(orderDict['price'])
+
+'''
+
+orderDict = {}
+
+
+with open('matrix_CSV.csv') as matrixCSV:
+    readMatrix = csv.reader(matrixCSV, delimiter=',')
+
+    for row in readMatrix:
+        print(row)
+        volume = row[0]
+        peg = row[1]
+        tstate = row[2]
+        oID = row[3]
+
+        orderDict['size'] = volume
+        orderDict['price'] = peg
+        orderDict['side'] = tstate
+        orderDict['product_id'] = oID
+
+print(orderDict)
