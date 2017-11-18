@@ -35,7 +35,6 @@ class CoinbaseExchangeAuth(AuthBase):
         return request
 
 
-#GDAX_config = {}
 
 f = open( "GDAX/config_GDAX_DONT_UPLOAD.json" , "rb" )
 GDAX_config = json.load(f)
@@ -52,19 +51,6 @@ GDAX_secret = GDAX_config["GDAX_API_SECRET"]
 
 
 auth = CoinbaseExchangeAuth( GDAX_key, GDAX_secret, GDAX_phrase)
-
-
-
-
-
-#auth = CoinbaseExchangeAuth("f6afb4b847b36f9920e0d4f399e95c9e", "meK/7bbiROSmMLL4pAi9TPVSivOk6ysLUWIB102oCPylPfdqGEZD7qq6f45iRhDHHbEVFP030IjMHAk9VL2/aQ==", "gc4f2kyu8u5")
-
-#auth = CoinbaseExchangeAuth("2cd9b4aaf35f6ac8999e9236a361f03d","oTSTSqVGpG2WEX0wS0prA6xAStgvAmqmBwENVh9yRv0l39RTO3Q3E43kYUroTZphnNd/QBX4tPxpwqgqWAztdA==",
-#                            "0jma8ut7ah3o")
-
-
-
-
 
 
 
@@ -89,11 +75,6 @@ print("2")
 #print(f.json())
 
 
-
-'''
-for key in f.json():
-    print(key['price'], key['order_id'], key['settled'])
-'''
 order = {}
 loopit = True
 
@@ -175,49 +156,4 @@ while loopit == True:
                         run_once = 1
                     break
 
-        #else:
-            #continue
-
-        #break
-
     time.sleep(2)
-                # r = requests.post(api_url + '/orders', json=order, auth=auth)
-                # print(r.json())
-                # last_fill_dealt_with = key['order_id']
-
-                # last_fill_dealt_with =
-
-        #else:
-            # print(key['price'], key['size'], key['fee'], key['side'], key['settled'], key['liquidity'], key['created_at'], key['order_id'])
-            # print("This is the last order dealt with")
-
-            # print r.json()
-
-
-            #    print(key['price'], key['size'], key['fee'], key['side'], key['settled'], key['liquidity'], key['created_at'], key['order_id'])
-
-'''
-print(g.json())
-
-print(g.json)
-
-for key in g.json():
-    print(key['status'], key['size'], key['price'], key['side'], key['settled'])
-#print(g.json())
-'''
-
-#print("3")
-
-'''
-# Place an order
-order = {
-    'size': 1.0,
-    'price': 1.0,
-    'side': 'buy',
-    'product_id': 'BTC-USD',
-}
-r = requests.post(api_url + 'orders', json=order, auth=auth)
-print r.json()
-'''
-
-# {"id": "0428b97b-bec1-429e-a94c-59992926778d"}
