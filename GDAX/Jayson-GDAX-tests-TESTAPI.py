@@ -156,4 +156,4 @@ while loopit == True:
                         run_once = 1
                     break
 
-    time.sleep(2)
+    time.sleep(10)
