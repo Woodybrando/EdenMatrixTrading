@@ -50,9 +50,13 @@ GDAX_phrase = GDAX_config["GDAX_PASSPHRASE"]
 GDAX_key = GDAX_config["GDAX_API_KEY"]
 GDAX_secret = GDAX_config["GDAX_API_SECRET"]
 
-print(GDAX_phrase)
 
 auth = CoinbaseExchangeAuth( GDAX_key, GDAX_secret, GDAX_phrase)
+
+
+
+
+
 #auth = CoinbaseExchangeAuth("f6afb4b847b36f9920e0d4f399e95c9e", "meK/7bbiROSmMLL4pAi9TPVSivOk6ysLUWIB102oCPylPfdqGEZD7qq6f45iRhDHHbEVFP030IjMHAk9VL2/aQ==", "gc4f2kyu8u5")
 
 #auth = CoinbaseExchangeAuth("2cd9b4aaf35f6ac8999e9236a361f03d","oTSTSqVGpG2WEX0wS0prA6xAStgvAmqmBwENVh9yRv0l39RTO3Q3E43kYUroTZphnNd/QBX4tPxpwqgqWAztdA==",
@@ -131,13 +135,13 @@ while loopit == True:
                 if key['side'] == 'sell':
                     new_order_side = 'buy'
                     new_order_price = float(key['price'])
-                    new_price = new_order_price * .999
+                    new_price = new_order_price * .992733
 
 
                 elif key['side'] == 'buy':
                     new_order_side = 'sell'
                     new_order_price = float(key['price'])
-                    new_price = new_order_price * 1.001
+                    new_price = new_order_price * 1.007267
 
 
                 print('The Trade is Settle: ' + str(key['settled']))
