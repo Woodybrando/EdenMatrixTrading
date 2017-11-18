@@ -35,14 +35,32 @@ class CoinbaseExchangeAuth(AuthBase):
         return request
 
 
+#GDAX_config = {}
+
+f = open( "GDAX/config_GDAX_DONT_UPLOAD.json" , "rb" )
+GDAX_config = json.load(f)
+f.close()
+
 
 api_url = 'https://api.gdax.com'
 #api_url = 'https://api-public.sandbox.gdax.com'
 
-auth = CoinbaseExchangeAuth("f6afb4b847b36f9920e0d4f399e95c9e", "meK/7bbiROSmMLL4pAi9TPVSivOk6ysLUWIB102oCPylPfdqGEZD7qq6f45iRhDHHbEVFP030IjMHAk9VL2/aQ==", "gc4f2kyu8u5")
+
+GDAX_phrase = GDAX_config["GDAX_PASSPHRASE"]
+GDAX_key = GDAX_config["GDAX_API_KEY"]
+GDAX_secret = GDAX_config["GDAX_API_SECRET"]
+
+print(GDAX_phrase)
+
+auth = CoinbaseExchangeAuth( GDAX_key, GDAX_secret, GDAX_phrase)
+#auth = CoinbaseExchangeAuth("f6afb4b847b36f9920e0d4f399e95c9e", "meK/7bbiROSmMLL4pAi9TPVSivOk6ysLUWIB102oCPylPfdqGEZD7qq6f45iRhDHHbEVFP030IjMHAk9VL2/aQ==", "gc4f2kyu8u5")
 
 #auth = CoinbaseExchangeAuth("2cd9b4aaf35f6ac8999e9236a361f03d","oTSTSqVGpG2WEX0wS0prA6xAStgvAmqmBwENVh9yRv0l39RTO3Q3E43kYUroTZphnNd/QBX4tPxpwqgqWAztdA==",
 #                            "0jma8ut7ah3o")
+
+
+
+
 
 
 
@@ -75,74 +93,103 @@ for key in f.json():
 order = {}
 loopit = True
 
-run_once = 0
+#run_once = 0
 
 
 while loopit == True:
-
+    run_once = 0
     last_order_file_handle = open('GDAX/last_order_id_processed.txt', 'r+')
     last_fill_dealt_with = last_order_file_handle.readline()
-    print(last_fill_dealt_with)
+    print('this is the last order_id dealt with ' + last_fill_dealt_with)
     last_order_file_handle.close()
 
-    order_id = "{} & ".format(str(last_fill_dealt_with))
-    f = requests.get(api_url + '/fills?product_id=LTC-USD' + order_id, auth=auth)
+    f = requests.get(api_url + '/fills?cb-before=' + str(last_fill_dealt_with) + '&product_id=LTC-USD', auth=auth)
+    print(f)
+
 
     for key in f.json():
-        if key['order_id'] != last_fill_dealt_with:
-            print('This order has triggered:')
-            print(
-            key['price'], key['size'], key['fee'], key['side'], key['settled'], key['liquidity'], key['created_at'],
-            key['order_id'])
-            # print("you triggered a " + key['side'] + " time to update your matrix!")
 
-            if key['side'] == 'sell':
-                new_order_side = 'buy'
-                new_order_price = float(key['price'])
-                new_price = new_order_price * .984
+        wait = 0
+
+        print('    this is the most recent order_id ' + key['order_id'])
+
+        check_key = key['order_id']
+
+        if check_key == last_fill_dealt_with:
+            print('No new trades... hold tight it will happen')
+            break
+
+        else:
+
+            if str(key['order_id']) != last_fill_dealt_with:
+                print('This order has triggered:')
+                print(
+                    key['price'], key['size'], key['fee'], key['side'], key['settled'], key['liquidity'], key['created_at'],
+                    key['order_id'])
+                # print("you triggered a " + key['side'] + " time to update your matrix!")
+
+                if key['side'] == 'sell':
+                    new_order_side = 'buy'
+                    new_order_price = float(key['price'])
+                    new_price = new_order_price * .999
 
 
-            elif key['side'] == 'buy':
-                new_order_side = 'sell'
-                new_order_price = float(key['price'])
-                new_price = new_order_price * 1.016
+                elif key['side'] == 'buy':
+                    new_order_side = 'sell'
+                    new_order_price = float(key['price'])
+                    new_price = new_order_price * 1.001
 
-            order = {'price': str(round(new_price, 2)), 'size': key['size'], 'side': new_order_side,
-                     'product_id': key['product_id']}
-            # new_trade = requests.post(order)
 
-            # r = requests.post(api_url + 'orders', json=order, auth=auth)
-            r = requests.post(api_url + '/orders', json=order, auth=auth)
-            r
+                print('The Trade is Settle: ' + str(key['settled']))
 
-            print("we need to execute this new order:")
-            print(order)
+                if key['settled'] == True:
+                    order = {'price': str(round(new_price, 2)), 'size': key['size'], 'side': new_order_side,
+                             'product_id': key['product_id']}
 
-            last_fill_dealt_with2 = key['order_id']
+                    print("we need to execute this new order:")
 
-            if run_once == 0:
-                # last_fill_dealt_with = last_fill_dealt_with2
+                    print(order)
+                    # new_trade = requests.post(order)
 
-                last_order_file_handle2 = open('GDAX/last_order_id_processed.txt', 'w')
+                    r = requests.post(api_url + '/orders', json=order, auth=auth)
 
-                last_order_file_handle2.write(last_fill_dealt_with2)
+                    print r.json()
 
-                print(last_fill_dealt_with2)
 
-                run_once = 1
+
+                    last_fill_dealt_with2 = key['order_id']
+
+                    if run_once == 0:
+                        # last_fill_dealt_with = last_fill_dealt_with2
+
+                        last_order_file_handle2 = open('GDAX/last_order_id_processed.txt', 'w')
+
+                        last_order_file_handle2.write(str(last_fill_dealt_with2))
+
+                        print(str(last_fill_dealt_with2))
+                        last_order_file_handle2.close()
+                        run_once = 1
+                    break
+
+        #else:
+            #continue
+
+        #break
+
+    time.sleep(2)
                 # r = requests.post(api_url + '/orders', json=order, auth=auth)
                 # print(r.json())
                 # last_fill_dealt_with = key['order_id']
 
                 # last_fill_dealt_with =
 
-        else:
+        #else:
             # print(key['price'], key['size'], key['fee'], key['side'], key['settled'], key['liquidity'], key['created_at'], key['order_id'])
             # print("This is the last order dealt with")
 
             # print r.json()
 
-            time.sleep(2)
+
             #    print(key['price'], key['size'], key['fee'], key['side'], key['settled'], key['liquidity'], key['created_at'], key['order_id'])
 
 '''
@@ -155,7 +202,7 @@ for key in g.json():
 #print(g.json())
 '''
 
-print("3")
+#print("3")
 
 '''
 # Place an order
