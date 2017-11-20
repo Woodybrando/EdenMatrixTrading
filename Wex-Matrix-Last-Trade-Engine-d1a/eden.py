@@ -283,11 +283,51 @@ def exit_program(rc, mfile):
 # BTC-E MARKET FEE
 # btce_trade_fee = .002
 
-# ***********************************************************************************************************
+
+# JAYSON TEST ZONE #
+# CURRENTLY WORKING ON GETTING THE TRIGGERED TRADES TRADE INITIATION ENGINE WORKING ON WEX
+
+
+f = open( "Wex-Matrix-Last-Trade-Engine-d1a/config_WEX_DONT_UPLOAD.json" , "rb" )
+WEX_config = json.load(f)
+f.close()
+
+
+WEX_appID = WEX_config["APP_ID"]
+WEX_key = WEX_config["WEX_API_KEY"]
+WEX_secret = WEX_config["WEX_API_SECRET"]
+WEX_cluster = WEX_config["eu-west-1"]
+
+
+from pusher import Pusher
+
+pusher = Pusher(
+  app_id=u'WEX_appID',
+  key=u'WEX_API_KEY',
+  secret=u'WEX_API_SECRET',
+  cluster=u'APP_CLUSTER'
+)
+
+f = pusher.trigger(u'ltc_usd.trades', u'buy')
+
+print(f)
+
+for line in tradehistory('ltc_usd'):
+    print(line)
+
+
+'''
+
+trade_success, order_id = trade(config["tpair"], price, "sell", trade_volume)
+if trade_success != 1:
+    debugfile.write(
+        "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(
+'''
+            # ***********************************************************************************************************
 # SECTION A - INITIALIZATIONS
 # ***********************************************************************************************************
 
-
+'''
 
 exit(1)
 
@@ -980,3 +1020,6 @@ exit_program(0, mfile)
 # Another to do
 # A GUI, lets you quit program manually and will call exit_program so closes up with housecleaning
 # instead of a kill
+            
+            
+'''

@@ -3,7 +3,7 @@ import json
 
 def read_config():
     config = {}
-    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/config.json') as f:
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/Wex-Matrix-Last-Trade-Engine-d1a/config.json') as f:
         config = json.load(f)
     for k, v in config.iteritems():
         print '%s: %s' % (k, v)
