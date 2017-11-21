@@ -1,0 +1,15 @@
+{
+    "exchange_choice": "wex.nz",
+    "BTCE_API_KEY": "RIB9FQYP-KV33URN7-0ZIJ72YT-DKK9ST9W-X4DFJG8O",
+    "BTCE_API_SECRET": "e4112d478f269af1cb620dad09cccf9cfffc209407ca93c75af5205b7c475e91",
+    "trade_style": "bryn",
+    "tpair": "ltc_usd",
+    "wex_trade_fee": 0.002,
+    "moon_basket_factor": 0.25,
+    "initial_investment": 100.00,
+    "matrix_spread_percent": 1.019,
+    "matrix_bottom_ratio":0.75,
+    "matrix_top_ratio":1.5,
+    "matrix_dir":"/Users/vannycat/PycharmProjects/EdenMatrixTrading/Bryn_wex_ltc_usd",
+    "matrix_fname":"/Users/vannycat/PycharmProjects/EdenMatrixTrading/Bryn_wex_ltc_usd/Matrix_ltc_usd.txt"
+}
