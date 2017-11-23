@@ -128,6 +128,9 @@ while loopit == True:
                 print('The Trade is Settle: ' + str(key['settled']))
 
                 if key['settled'] == True:
+
+
+
                     order = {'price': str(round(new_price, 2)), 'size': key['size'], 'side': new_order_side,
                              'product_id': key['product_id']}
 
