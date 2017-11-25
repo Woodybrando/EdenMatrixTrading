@@ -77,173 +77,143 @@ C = BTC_USD
 x = 0
 
 y = 1
+n = 2
 
-marketPair = input("Enter the letter of the market pair u want to trade in? a. LTC_USD b. LTC_BTC c. BTC_USD?")
+m = 1
+e = 2
 
-if marketPair == a:
-    marketDec = 2
-elif marketPair == b:
-    marketDec = 6
-elif marketPair == c:
-    marketDec = 2
 
 
-# Add a way to set what entry point u want to start your matrix say if market is 75.5
-# and u want to start only if price = 73
+doWhat = input("Do you want to m. build a matrix or e. activate the rebuy engine? m or e?")
 
+if doWhat == m:
 
+    marketPair = input("Enter the letter of the market pair u want to trade in? a. LTC_USD b. LTC_BTC c. BTC_USD?")
 
-marketPr = {}
+    if marketPair == a:
+        marketDec = 2
+    elif marketPair == b:
+        marketDec = 6
+    elif marketPair == c:
+        marketDec = 2
 
-howPrice = input("Do u want to x. enter the market price or y. ask GDAX? x or y?")
 
-if howPrice == x:
-    marketP = input("What is the current market price?")
+    # Add a way to set what entry point u want to start your matrix say if market is 75.5
+    # and u want to start only if price = 73
 
 
 
-elif howPrice == y:
-    marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
-    jsonPrice = marketPr.json()
-    print(jsonPrice['ask'])
-    marketPr = float(jsonPrice['ask'])
-    marketP = round(marketPr, 2)
+    marketPr = {}
 
-#requests.post(api_url + '/orders', json=order, auth=auth)
+    howPrice = input("Do u want to x. enter the market price or y. ask GDAX? x or y?")
 
-initInv = input("How much do you want to invest, and by invest I mean how much can u stand to lose???")
+    if howPrice == x:
+        marketP = input("What is the current market price?")
 
 
-aboveInv = initInv/2
 
-print("Above Investment: " + str(aboveInv))
+    elif howPrice == y:
+        marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
+        jsonPrice = marketPr.json()
+        print(jsonPrice['ask'])
+        marketPr = float(jsonPrice['ask'])
+        marketP = round(marketPr, 2)
 
+    #requests.post(api_url + '/orders', json=order, auth=auth)
 
+    initInv = input("How much do you want to invest, and by invest I mean how much can u stand to lose???")
 
-aboveFee = aboveInv * .003
 
-upperBuy = aboveInv - aboveFee
+    aboveInv = initInv/2
 
-aboveInv = upperBuy
+    print("Above Investment: " + str(aboveInv))
 
-print("Upper Cost minus Fee " + str(upperBuy))
 
 
-aboveCoins = aboveInv/marketP
+    aboveFee = aboveInv * .003
 
-print( "Above Coins: " + str(aboveCoins))
+    upperBuy = aboveInv - aboveFee
 
-# turn this on as a question in the future
-resolution = 25
+    aboveInv = upperBuy
 
-aboveVol = round(aboveCoins/(resolution - 1), 4)
+    print("Upper Cost minus Fee " + str(upperBuy))
 
-print("Above Coin Volume = " + str(aboveVol))
 
-belowBuys = initInv - aboveInv
+    aboveCoins = aboveInv/marketP
 
-print("Below Investment: " + str(belowBuys))
+    print( "Above Coins: " + str(aboveCoins))
 
-unroundVal = belowBuys/(resolution - 1)
+    # turn this on as a question in the future
+    resolution = 25
 
-belowVal = round(unroundVal, 4)
+    aboveVol = round(aboveCoins/(resolution - 1), 4)
 
-print("Below Value Per Peg: " + str(belowVal))
+    print("Above Coin Volume = " + str(aboveVol))
 
+    belowBuys = initInv - aboveInv
 
-marketTop = marketP * 1.12
+    print("Below Investment: " + str(belowBuys))
 
-print("Market Top " + str(marketTop))
+    unroundVal = belowBuys/(resolution - 1)
 
+    belowVal = round(unroundVal, 4)
 
+    print("Below Value Per Peg: " + str(belowVal))
 
-marketBottom = .92 * marketP
 
-print("Market Bottom " +  str(marketBottom))
+    marketTop = marketP * 1.12
 
-marketUpper = marketP * 1.002
-marketLower = marketP * .998
+    print("Market Top " + str(marketTop))
 
-print("MarketUpper is " + str(marketUpper))
-print("MarketLower is " + str(marketLower))
 
 
-upperSpread = (marketTop - marketUpper) / (resolution - 1)
-lowerSpread = (marketLower - marketBottom) / (resolution - 1)
+    marketBottom = .92 * marketP
 
-print("Lower Spread " + str(lowerSpread))
+    print("Market Bottom " +  str(marketBottom))
 
-peg = 0
-number = 0
-list = []
-matrix = []
-upperMatrix = []
-lowerMatrix = []
-countOrder = {}
+    marketUpper = marketP * 1.002
+    marketLower = marketP * .998
 
-count = resolution * 2 - 1
+    print("MarketUpper is " + str(marketUpper))
+    print("MarketLower is " + str(marketLower))
 
-pegMakerU = marketP
-pegMakerL = marketP
 
-lNumber = 24
-mNumber = 25
-uNumber = 26
+    upperSpread = (marketTop - marketUpper) / (resolution - 1)
+    lowerSpread = (marketLower - marketBottom) / (resolution - 1)
 
-print("Count is " + str(count))
+    print("Lower Spread " + str(lowerSpread))
 
-print("Current Market Price: " + str(marketPr))
+    peg = 0
+    number = 0
+    list = []
+    matrix = []
+    upperMatrix = []
+    lowerMatrix = []
+    countOrder = {}
 
-while count > -1:
+    count = resolution * 2 - 1
 
-    peg = pegMakerU + upperSpread
+    pegMakerU = marketP
+    pegMakerL = marketP
 
-    #print("Count is " + str(count))
-    #print("Peg is " + str(peg))
+    lNumber = 23
+    mNumber = 24
+    uNumber = 25
 
-    if count > resolution:
+    print("Count is " + str(count))
 
-        volume = aboveVol
+    print("Current Market Price: " + str(marketPr))
 
-        rPeg = round(peg, marketDec)
+    while count > -1:
 
-        strPeg = str(rPeg)
+        peg = pegMakerU + upperSpread
 
-        pegDollar, pCode = strPeg.split('.')
+        #print("Count is " + str(count))
+        #print("Peg is " + str(peg))
 
-        iDollar = int(pegDollar)
+        if count > resolution:
 
-        iCode = int(pCode)
-
-        if iCode == 98:
-            rPeggle = .97
-            rPeg = iDollar + rPeggle
-
-        if iCode == 45:
-            rPeggle = .44
-            rPeg = iDollar + rPeggle
-
-        list = uNumber, rPeg, round(volume, 4)
-        matrix.append(list)
-        upperMatrix.append(list)
-        pegMakerU = peg
-        uNumber = uNumber + 1
-
-    elif count == 25:
-        peg = marketP
-        rPeg = round(peg, 2)
-        volume = aboveVol
-        number = mNumber
-        list = number, rPeg, round(volume, 4)
-        matrix.append(list)
-
-    elif count < resolution:
-        peg = pegMakerL - lowerSpread
-
-        if peg >= (marketBottom):
-
-            belowVol = belowVal / peg
-            volume = belowVol
+            volume = aboveVol
 
             rPeg = round(peg, marketDec)
 
@@ -263,170 +233,379 @@ while count > -1:
                 rPeggle = .44
                 rPeg = iDollar + rPeggle
 
-            list = lNumber, rPeg, round(volume, 4)
+            list = uNumber, rPeg, round(volume, 4)
             matrix.append(list)
-            lowerMatrix.append(list)
-            pegMakerL = pegMakerL - lowerSpread
-            lNumber = lNumber - 1
+            upperMatrix.append(list)
+            pegMakerU = peg
+            uNumber = uNumber + 1
+
+        elif count == mNumber:
+            peg = marketP
+            rPeg = round(peg, 2)
+            volume = aboveVol
+            number = mNumber
+            list = number, rPeg, round(volume, 4)
+            matrix.append(list)
+
+        elif count < resolution:
+            peg = pegMakerL - lowerSpread
+
+            if peg >= (marketBottom):
+
+                belowVol = belowVal / peg
+                volume = belowVol
+
+                rPeg = round(peg, marketDec)
+
+                strPeg = str(rPeg)
+
+                pegDollar, pCode = strPeg.split('.')
+
+                iDollar = int(pegDollar)
+
+                iCode = int(pCode)
+
+                if iCode == 98:
+                    rPeggle = .97
+                    rPeg = iDollar + rPeggle
+
+                if iCode == 45:
+                    rPeggle = .44
+                    rPeg = iDollar + rPeggle
+
+                list = lNumber, rPeg, round(volume, 4)
+                matrix.append(list)
+                lowerMatrix.append(list)
+                pegMakerL = pegMakerL - lowerSpread
+                lNumber = lNumber - 1
 
 
 
-    # print(number, rPeg, rVol)
+        # print(number, rPeg, rVol)
 
-    count = count - 1
-
-
-
-matrix.sort(key=lambda x: x[1])
+        count = count - 1
 
 
-print(matrix)
-print(len(matrix))
 
-print(upperMatrix)
-print(len(upperMatrix))
-
-print(lowerMatrix)
-print(len(lowerMatrix))
+    matrix.sort(key=lambda x: x[1])
 
 
-'''
-# To get the peg value printed uncomment this section
+    print(matrix)
 
-for line in matrix:
+    saveMatrix = input("Do you want to save the matrix to a local file? y or n")
+    if saveMatrix == y:
+        #matrixFileHandle = open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py", "w")
+        #with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py", 'w') as fp:
+         #   fp.write('\n'.join('{} {}'.format(x[0], x[1]) for x in matrix))
 
-    pegValue2 = line[1] * line[2]
-    print(round(pegValue2, 3))
+        #with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py") as f:
+            #next(f)  # skip first line
+         #   arr = [tuple(line.split()) for line in f]
+         #   print(arr)
+
+        with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py", 'w') as graphd:
+            for row in matrix:
+                print >> graphd, ', '.join(map(str, row))
+
+
+            #matrixFileHandle = json.load(matrix)
+        #matrixFileHandle.close()
+
+    print(len(matrix))
+
+    print(upperMatrix)
+    print(len(upperMatrix))
+
+    print(lowerMatrix)
+    print(len(lowerMatrix))
+
+
+    '''
+    # To get the peg value printed uncomment this section
     
-print("Sum of row Values " + str(sum(rowVal)))
+    for line in matrix:
+    
+        pegValue2 = line[1] * line[2]
+        print(round(pegValue2, 3))
+        
+    print("Sum of row Values " + str(sum(rowVal)))
+    '''
+
+
+    totalInvestment = [ sum(x) for x in zip(*matrix) ]
+    totalUpperInvestment = [ sum(x) for x in zip(*upperMatrix) ]
+    totalLowerInvestment = [ sum(x) for x in zip(*lowerMatrix) ]
+
+    print("Total Upper Investment in Coins? " + str(totalUpperInvestment[2]))
+    #totalInvestment = sum(matrix)
+
+    upperCost = totalUpperInvestment[2] * marketP
+
+    print("Upper coin cost " + str(upperCost) )
+
+
+    sumLower = []
+
+    for line in lowerMatrix:
+        pegVal = line[1] * line[2]
+        rPegVal = round(pegVal, 3)
+        sumLower.append(rPegVal)
+
+    lowerValAdd = sum(sumLower)
+
+    print(sumLower)
+
+    print("Lower buys total cost " + str(lowerValAdd))
+
+    totalMatrixCost = upperCost + lowerValAdd
+
+    print("Total Matrix Cost " + str(totalMatrixCost))
+
+
+
+    #print("Total Coin Cost: " + str(upperCost + lowerCost))
+
+    y = 0
+    n = 1
+    upperPegOrder = {}
+
+    exitAns = input("Do you want to exit? y or n?")
+
+    if exitAns == y:
+        exit()
+
+    #for line in matrix:
+
+    buyAbove = input("Do you want to buy your above matrix now? y or n?")
+
+    orderCount = 0
+
+    if buyAbove == y:
+
+        marketOrder = str(round(aboveInv, 2))
+        print(marketOrder)
+
+        rAboveCoins = str(round(aboveCoins, 3))
+
+        buyNowAns = input(
+            "Does that number look right, aka you will buy " + rAboveCoins + " " + str(marketPair)
+            + " @ the current market price " + str(marketP)
+            + " if you say yes? y or n?")
+
+        if buyNowAns == y:
+            aboveOrder = {'type': 'market', 'funds': marketOrder, 'product_id': str(marketPair), 'side': 'buy'}
+
+            s = requests.post(api_url + '/orders', json=aboveOrder, auth=auth)
+
+            print(s.json())
+
+            last_order_file_handle = open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt', 'r+')
+            last_fill_dealt_withL = last_order_file_handle.readline()
+            print('this is the last order_id dealt with ' + last_fill_dealt_withL)
+            last_order_file_handle.close()
+
+            e = requests.get(api_url + '/fills?cb-before=' + str(last_fill_dealt_withL) + '&product_id=LTC-USD', auth=auth)
+            print(e.json())
+
+            for key in e.json():
+                wait = 0
+
+                print('    this is the most recent order_id ' + key['order_id'])
+
+                last_fill_dealt_with0 = key['order_id']
+                last_order_file_handle0 = open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt', 'w')
+                last_order_file_handle0.write(str(last_fill_dealt_with0))
+                print(str(last_fill_dealt_with0))
+                last_order_file_handle0.close()
+                break
+
+    buildUpper = input("Do you want to build your upper matrix now? y or no?")
+
+
+    if buildUpper == y:
+
+        for line in upperMatrix:
+            upperSide = 'sell'
+            upperVol = str(aboveVol)
+            upperPeg = str(line[1])
+            upperPegOrder = {'side': upperSide, 'price': upperPeg, 'size': upperVol, 'product_id': str(marketPair)}
+            t = requests.post(api_url + '/orders', json=upperPegOrder, auth=auth)
+            print(t.json())
+
+
+    buildLower = input("Do you want to build your lower matrix now? y or n?")
+
+    if buildLower == y:
+
+        for line2 in lowerMatrix:
+            lowerSide = 'buy'
+            lowerPeg = str(line2[1])
+            lowerVol = str(line2[2])
+            lowerPegOrder = {'side': lowerSide, 'price': lowerPeg, 'size': lowerVol, 'product_id': str(marketPair)}
+            u = requests.post(api_url + '/orders', json=lowerPegOrder, auth=auth)
+            print(u.json())
+
+    #activateEngine = input("Activate the rebuying engine!? y or n?")
+    #if activateEngine == y:
+
+
+elif doWhat == e:
+
+    matrixRead = []
+
+    #matrixFromFile = open(
+    #    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py', 'r')
+    #matrixLines = matrixFromFile.readlines()
+
+    #for line3 in matrixLines:
+    #    line3.strip()
+    #    matrixRead.append(line3)
+
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py') as f:
+
+        matrixLines = f.read().splitlines()
+        for line4 in matrixLines:
+            tupleNew = line4.split(',')
+
+            matrixRead.append(tupleNew)
+
+
+    print("This is the matrix:")
+    print(matrixRead)
+    #matrixFromFile.close()
+
+
+    last_fill_file_handleE = open(
+        '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt', 'r+')
+    last_fill_dealt_withE = last_fill_file_handleE.readline()
+    print('this is the last order_id dealt with ' + last_fill_dealt_withE)
+    last_fill_file_handleE.close()
+
+    requestFills = requests.get(api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
+
+    #print(requestFills.json())
+    jump = requestFills.json()
+
+    count2 = 0
+
+    while count2 < 100:
+
+        if jump[count2] == last_fill_dealt_withE:
+            count2 = 101
+
+        else:
+
+            print(jump[count2])
+            eOrderID = jump[count2]['order_id']
+            eSide = jump[count2]['side']
+            eSize = jump[count2]['size']
+            ePrice = jump[count2]['price']
+            eProduct_id = jump[count2]['product_id']
+
+            if count2 == 0:
+                last_order_dealt_withN = eOrderID
+                last_order_file_handle2 = open(
+                    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
+                    'w')
+                last_order_file_handle2.write(str(last_order_dealt_withN))
+
+
+            for line5 in matrixRead:
+                print("This is matrixRead:")
+                print(matrixRead[count2])
+
+                print("Line 5 is or should be the price read from the matrix:")
+                print(line5[1])
+                mIndex = line5[0]
+                mPrice = line5[1]
+                mVolume = line5[2]
+
+
+                if float(ePrice) == float(mPrice):
+                    if eSide == 'buy':
+                        newSide = 'sell'
+                        newPeg = mIndex + 1
+                        newPrice = matrixRead[newPeg][1]
+                        print(newPrice)
+
+
+                    elif eSide == 'sell':
+                        newSide = 'buy'
+                        newPeg = mIndex - 1
+                        newPrice = matrixRead[newPeg][1]
+                        print(newPrice)
+
+
+
+            engineOrder = {'side': newSide, 'size': eSize, 'price': newPrice, 'product_id': Product_id}
+
+            r = requests.post(api_url + '/orders', json=engineOrder, auth=auth)
+
+        count2 += 1
+
+
+
+    
+
+    print(jump[0]['order_id'])
+    secondID = 'b1b67a1d-5826-4890-a5f1-ec259c331932'
+    if jump[0]['order_id'] == secondID :
+        print('You win the night!')
+
+    #for line in jump:
+    #    print(line)
+
+
+
+
+
+'''
+    if jump[0] != last_fill_dealt_withE:
+        orderID = jump['order_id']
+        side =  jump['side']
+        size =  jump['size']
+        price =  jump['price']
+        product_id =  jump['product_id']
 '''
 
+    #print(requestFills[0]['order_id'])
+#orderIds = []
 
-totalInvestment = [ sum(x) for x in zip(*matrix) ]
-totalUpperInvestment = [ sum(x) for x in zip(*upperMatrix) ]
-totalLowerInvestment = [ sum(x) for x in zip(*lowerMatrix) ]
+##for key in requestFills.json():
+   # orderID = key['order_id']
+  #  side =  key['side']
+ #   size =  key['size']
+#    price =  key['price']
+#    product_id =  key['product_id']
+   # if key['order_id'] == last_fill_dealt_withE
+  #      break
+ #
+#    print (orderID , side , size ,  price , product_id)
 
-print("Total Upper Investment in Coins? " + str(totalUpperInvestment[2]))
-#totalInvestment = sum(matrix)
+  #  fillInfo = [json.loads(orderID , side , size ,  price , product_id) for key in requestFills.results]
 
-upperCost = totalUpperInvestment[2] * marketP
+#    orderIds.append = fillInfo
 
-print("Upper coin cost " + str(upperCost) )
+    #docstats = [json.loads(doc['status']) for doc in response.results]
 
+#print(orderIds)
 
-sumLower = []
+'''
 
-for line in lowerMatrix:
-    pegVal = line[1] * line[2]
-    rPegVal = round(pegVal, 3)
-    sumLower.append(rPegVal)
-
-lowerValAdd = sum(sumLower)
-
-print(sumLower)
-
-print("Lower buys total cost " + str(lowerValAdd))
-
-totalMatrixCost = upperCost + lowerValAdd
-
-print("Total Matrix Cost " + str(totalMatrixCost))
-
-
-
-#print("Total Coin Cost: " + str(upperCost + lowerCost))
-
-y = 0
-n = 1
-upperPegOrder = {}
-
-exitAns = input("Do you want to exit? y or n?")
-
-if exitAns == y:
-    exit()
-
-#for line in matrix:
-
-buyAbove = input("Do you want to buy your above matrix now? y or n?")
-
-if buyAbove == y:
-
-    marketOrder = str(round(aboveInv, 2))
-    print(marketOrder)
-
-    rAboveCoins = str(round(aboveCoins, 3))
-
-    buyNowAns = input(
-        "Does that number look right, aka you will buy " + rAboveCoins + " " + str(marketPair)
-        + " @ the current market price " + str(marketP)
-        + " if you say yes? y or n?")
-
-    if buyNowAns == y:
-        aboveOrder = {'type': 'market', 'funds': marketOrder, 'product_id': str(marketPair), 'side': 'buy'}
-
-        s = requests.post(api_url + '/orders', json=aboveOrder, auth=auth)
-
-        print(s.json())
-
-
-
-buildUpper = input("Do you want to build your upper matrix now? y or no?")
-
-if buildUpper == n:
-    exit()
-
-
-
-elif buildUpper == y:
-
-    for line in upperMatrix:
-        upperSide = 'sell'
-        upperVol = str(aboveVol)
-        upperPeg = str(line[1])
-        upperPegOrder = {'side': upperSide, 'price': upperPeg, 'size': upperVol, 'product_id': str(marketPair)}
-        t = requests.post(api_url + '/orders', json=upperPegOrder, auth=auth)
-        print(t.json())
-
-
-exit()
-
-for line in matrix:
-    while line[1] > marketBottom:
-        if line[1] >= marketUpper:
-            side = 'sell'
-        elif abs(line[1] - marketP) < abs(marketUpper - marketLower):
-            side = 0
-        elif line[1] <= marketLower:
-            side = 'buy'
-
-    if side != 0:
-        matrixOrder = { 'price': str(line[1]), 'size': str(line[2]), 'side': str(side), 'product_id': str(marketPair)}
-
-        print(order)
-
-        r = requests.post(api_url + '/orders', json=matrixOrder, auth=auth)
-
-
-
-
-
-y = 0
-n = 1
-
-exitAns = input("Do you want to exit? y or n?")
-
-if exitAns == y:
-    exit()
-elif exitAns == n:
     while loopit == True:
         run_once = 0
-        last_order_file_handle = open('GDAX/last_order_id_processed.txt', 'r+')
+        last_order_file_handle = open(
+            '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt', 'r+')
         last_fill_dealt_with = last_order_file_handle.readline()
         print('this is the last order_id dealt with ' + last_fill_dealt_with)
         last_order_file_handle.close()
 
-        f = requests.get(api_url + '/fills?cb-before=' + str(last_fill_dealt_with) + '&product_id=LTC-USD', auth=auth)
-        print(f)
+        f = requests.get(api_url + '/fills?cb-before=' + str(last_fill_dealt_with) + '&product_id=LTC-USD',
+                         auth=auth)
+        print(f.json())
 
+        if run_once == 0:
+            
 
         for key in f.json():
 
@@ -436,66 +615,66 @@ elif exitAns == n:
 
             check_key = key['order_id']
 
-            if check_key == last_fill_dealt_with:
+            if str(key['order_id']) != last_fill_dealt_with:
+                print('This order has triggered:')
+                print(
+                    key['price'], key['size'], key['fee'], key['side'], key['settled'], key['liquidity'],
+                    key['created_at'],
+                    key['order_id'])
+                # print("you triggered a " + key['side'] + " time to update your matrix!")
+
+                if key['side'] == 'sell':
+                    new_order_side = 'buy'
+                    new_order_price = float(key['price'])
+                    new_price = new_order_price * .992733
+
+
+                elif key['side'] == 'buy':
+                    new_order_side = 'sell'
+                    new_order_price = float(key['price'])
+                    new_price = new_order_price * 1.007267
+
+                print('The Trade is Settle: ' + str(key['settled']))
+
+                if key['settled'] == True:
+
+                    order = {'price': str(round(new_price, 2)), 'size': key['size'], 'side': new_order_side,
+                             'product_id': key['product_id']}
+
+                    print("we need to execute this new order:")
+
+                    print(order)
+                    # new_trade = requests.post(order)
+
+                    r = requests.post(api_url + '/orders', json=order, auth=auth)
+
+                    print r.json()
+
+                    last_fill_dealt_with2 = key['order_id']
+
+                    if run_once == 0:
+                        # last_fill_dealt_with = last_fill_dealt_with2
+
+                        last_order_file_handle2 = open(
+                            '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
+                            'w')
+
+                        last_order_file_handle2.write(str(last_fill_dealt_with2))
+
+                        print(str(last_fill_dealt_with2))
+                        last_order_file_handle2.close()
+                        run_once = 1
+                    break
+            elif check_key == last_fill_dealt_with:
                 print('No new trades... hold tight it will happen')
-                break
 
-            else:
-
-                if str(key['order_id']) != last_fill_dealt_with:
-                    print('This order has triggered:')
-                    print(
-                        key['price'], key['size'], key['fee'], key['side'], key['settled'], key['liquidity'], key['created_at'],
-                        key['order_id'])
-                    # print("you triggered a " + key['side'] + " time to update your matrix!")
-
-                    if key['side'] == 'sell':
-                        new_order_side = 'buy'
-                        new_order_price = float(key['price'])
-                        new_price = new_order_price * .992733
-
-
-                    elif key['side'] == 'buy':
-                        new_order_side = 'sell'
-                        new_order_price = float(key['price'])
-                        new_price = new_order_price * 1.007267
-
-
-                    print('The Trade is Settle: ' + str(key['settled']))
-
-                    if key['settled'] == True:
+                time.sleep(10)
 
 
 
-                        order = {'price': str(round(new_price, 2)), 'size': key['size'], 'side': new_order_side,
-                                 'product_id': key['product_id']}
-
-                        print("we need to execute this new order:")
-
-                        print(order)
-                        # new_trade = requests.post(order)
-
-                        r = requests.post(api_url + '/orders', json=order, auth=auth)
-
-                        print r.json()
 
 
+if activateEngine == n:
+        exit()
 
-                        last_fill_dealt_with2 = key['order_id']
-
-                        if run_once == 0:
-                            # last_fill_dealt_with = last_fill_dealt_with2
-
-                            last_order_file_handle2 = open('GDAX/last_order_id_processed.txt', 'w')
-
-                            last_order_file_handle2.write(str(last_fill_dealt_with2))
-
-                            print(str(last_fill_dealt_with2))
-                            last_order_file_handle2.close()
-                            run_once = 1
-                        break
-
-        time.sleep(10)
-
-
-
+'''
