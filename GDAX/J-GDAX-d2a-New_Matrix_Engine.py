@@ -54,6 +54,8 @@ auth = CoinbaseExchangeAuth( GDAX_key, GDAX_secret, GDAX_phrase)
 
 
 order = {}
+matrix_dict = {}
+retrace_dict = {}
 loopit = True
 
 #run_once = 0
@@ -66,25 +68,36 @@ BTC_USD = 'BTC-USD'
 
 
 a = LTC_USD
-A = LTC_USD
+A = a
 
 b = LTC_BTC
-B = LTC_BTC
+B = b
 
 c = BTC_USD
-C = BTC_USD
+C = c
 
 x = 0
+X = x
 
 y = 1
+Y = y
+
 n = 2
+N = n
 
 m = 1
-e = 2
+M = m
 
 
+s = 2
+S = s
 
-doWhat = input("Do you want to m. build a matrix or e. activate the rebuy engine? m or e?")
+e = 3
+E = e
+
+
+doWhat = input("Do you want to m. build a matrix file s. buy and set up your matrix or e. activate the rebuy engine? \n"
+               "type m or s or e?")
 
 if doWhat == m:
 
@@ -101,7 +114,7 @@ if doWhat == m:
     # Add a way to set what entry point u want to start your matrix say if market is 75.5
     # and u want to start only if price = 73
 
-
+    matrix_dict['Market Pair'] = marketPair
 
     marketPr = {}
 
@@ -121,67 +134,133 @@ if doWhat == m:
 
     #requests.post(api_url + '/orders', json=order, auth=auth)
 
-    initInv = input("How much do you want to invest, and by invest I mean how much can u stand to lose???")
 
+    matrix_dict['Market Price'] = marketP
 
-    aboveInv = initInv/2
+    initInv = input("How much do you want to invest aka amount u can lose and still pay all your bills? \n"
+                    "i.e. 1000 or 5273")
+
+    investmentFactor = input("How do you want to divide your investment into your above/below matrices ? \n"
+                    "i.e. enter .5 to put 50% above and 50% below \n"
+                    "or .2 for 20% above 80% below")
+
+    aboveInv = initInv * investmentFactor
+
+    matrix_dict['Above Investment'] = aboveInv
 
     print("Above Investment: " + str(aboveInv))
 
-
-
     aboveFee = aboveInv * .003
+
+    matrix_dict['Above Fee'] = aboveFee
 
     upperBuy = aboveInv - aboveFee
 
-    aboveInv = upperBuy
+    matrix_dict['Above Buy'] = upperBuy
+
+    lowerBuy = initInv - upperBuy
+
+    matrix_dict['Below Buy'] = lowerBuy
 
     print("Upper Cost minus Fee " + str(upperBuy))
 
-
     aboveCoins = aboveInv/marketP
+
+    matrix_dict['Above Coins'] = aboveCoins
 
     print( "Above Coins: " + str(aboveCoins))
 
     # turn this on as a question in the future
-    resolution = 25
 
-    aboveVol = round(aboveCoins/(resolution - 1), 4)
+    resolutionAbove = input("What resolution do you want to use in your upper matrix?\n"
+                            "i.e. 25 is twenty five sell pegs one spread from the last\n"
+                            "integers only")
+
+    resolutionBelow = input("What resolution do you want to use in your lower matrix?\n"
+                            "i.e. 5 is 5 pillars below which will be of a greater volume vs\n"
+                            "25 that are at smaller volume\n"
+                            "integers only")
+
+    matrix_dict['Resolution Above'] = resolutionAbove
+    matrix_dict['Resolution Below'] = resolutionBelow
+
+    aboveVol = round(aboveCoins/(resolutionAbove), 4)
+
+    matrix_dict['Above Volume'] = aboveVol
 
     print("Above Coin Volume = " + str(aboveVol))
 
+    abovePegValue = upperBuy/resolutionAbove
+    lowerPegValue = lowerBuy/resolutionBelow
+
+    matrix_dict['Above Peg Value'] = abovePegValue
+    matrix_dict['Below Peg Value'] = lowerPegValue
+
+    print("abovePegValue is " + str(abovePegValue))
+    print("belowPegValue is " + str(lowerPegValue))
+
     belowBuys = initInv - aboveInv
+
+    matrix_dict['Below Buys'] = belowBuys
 
     print("Below Investment: " + str(belowBuys))
 
-    unroundVal = belowBuys/(resolution - 1)
+    unroundVal = belowBuys/(resolutionBelow)
+
+    matrix_dict['Unrounded Below Peg Value'] = unroundVal
 
     belowVal = round(unroundVal, 4)
 
+    matrix_dict['Below Peg Value'] = belowVal
+
     print("Below Value Per Peg: " + str(belowVal))
 
+    h = 1
+    H = h
+    p = 2
+    P = p
+    m = 3
+    M = m
 
-    marketTop = marketP * 1.12
+    topAns = input("Do you want to set the matrix top and bottom by h. hand or by p. multipliers? h or m?")
+
+    if topAns == h:
+        marketTop = input("What is the top price for your matrix? ie. 177.87 or .00023 etc")
+        marketBottom = input("What is the bottom price for your matrix? i.e. 5479 or 20.23 or .0071")
+    elif topAns == m:
+        topFactor =  input("What multiplier do you want to use to create your matrix top? i.e. one point two times is: 1.2")
+        marketTop = marketP * topFactor
+        bottomFactor = input("What multiplier do you want to use to create your matrix bottom? \n "
+                             "i.e. .2 would set a lower matrix range twenty percent below \n "
+                             "the starting market or peg price so if market is $100 a .2 multiplier\n"
+                             "would set buys from market down to $80 or 20 percent down from market.")
+        marketBottom = marketP - (bottomFactor * marketP)
+
+    matrix_dict['Market Top'] = marketTop
+    matrix_dict['Market Bottom'] = marketBottom
 
     print("Market Top " + str(marketTop))
-
-
-
-    marketBottom = .92 * marketP
-
     print("Market Bottom " +  str(marketBottom))
 
-    marketUpper = marketP * 1.002
-    marketLower = marketP * .998
+
+    upperSpread = (marketTop - marketP) / (resolutionAbove)
+    lowerSpread = (marketP - marketBottom) / (resolutionBelow)
+
+    matrix_dict['Upper Spread'] = upperSpread
+    matrix_dict['Lower Spread'] = lowerSpread
+
+    print("Upper Spread " + str(upperSpread))
+    print("Lower Spread " + str(lowerSpread))
+
+    marketUpper = marketP + (upperSpread / 2)
+    marketLower = marketP - (lowerSpread / 2)
+
+    matrix_dict['Market Upper'] = marketUpper
+    matrix_dict['Market Lower'] = marketLower
 
     print("MarketUpper is " + str(marketUpper))
     print("MarketLower is " + str(marketLower))
 
-
-    upperSpread = (marketTop - marketUpper) / (resolution - 1)
-    lowerSpread = (marketLower - marketBottom) / (resolution - 1)
-
-    print("Lower Spread " + str(lowerSpread))
 
     peg = 0
     number = 0
@@ -191,14 +270,24 @@ if doWhat == m:
     lowerMatrix = []
     countOrder = {}
 
-    count = resolution * 2 - 1
+    resolution  = resolutionAbove + resolutionBelow + 1
+
+    matrix_dict['Total Resolution'] = resolution
+
+    count = resolutionAbove + resolutionBelow + 1
 
     pegMakerU = marketP
     pegMakerL = marketP
 
-    lNumber = 23
-    mNumber = 24
-    uNumber = 25
+
+
+    lNumber = resolutionBelow - 2
+    mNumber = resolutionBelow - 1
+    uNumber = resolutionBelow
+
+    #lNumber = 23
+    #mNumber = 24
+    #uNumber = 25
 
     print("Count is " + str(count))
 
@@ -211,7 +300,7 @@ if doWhat == m:
         #print("Count is " + str(count))
         #print("Peg is " + str(peg))
 
-        if count > resolution:
+        if count > mNumber:
 
             volume = aboveVol
 
@@ -247,7 +336,7 @@ if doWhat == m:
             list = number, rPeg, round(volume, 4)
             matrix.append(list)
 
-        elif count < resolution:
+        elif count < mNumber:
             peg = pegMakerL - lowerSpread
 
             if peg >= (marketBottom):
@@ -289,23 +378,40 @@ if doWhat == m:
 
     matrix.sort(key=lambda x: x[1])
 
+    for line6 in matrix:
+        if line6[0] == 0:
+            print("This is the matrix peg price: " + str(line6[1]))
+            retrace_dict[str(line6[1]) + ' buy'] = matrix[(line6[0] + 1)]
+            print("Market hit your matrix bottom")
+
+        elif line6[0] == resolution:
+            print("This is the matrix peg price: " + str(line6[1]))
+            retrace_dict[str(line6[1]) + ' sell'] = matrix[(line6[0] - 1)][1]
+            print("Market hit your matrix top")
+
+        else:
+            print("This is the matrix peg price: " + str(line6[1]))
+            retrace_dict[str(line6[1]) + ' buy'] = matrix[(line6[0] + 1)][1]
+            retrace_dict[str(line6[1]) + ' sell'] = matrix[(line6[0] - 1)][1]
+
+        #matrix_dict['Total Resolution'] = resolution
 
     print(matrix)
 
-    saveMatrix = input("Do you want to save the matrix to a local file? y or n")
+    saveMatrix = input("Do you want to save the matrices to a local files? y or n")
     if saveMatrix == y:
-        #matrixFileHandle = open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py", "w")
-        #with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py", 'w') as fp:
-         #   fp.write('\n'.join('{} {}'.format(x[0], x[1]) for x in matrix))
-
-        #with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py") as f:
-            #next(f)  # skip first line
-         #   arr = [tuple(line.split()) for line in f]
-         #   print(arr)
 
         with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py", 'w') as graphd:
             for row in matrix:
                 print >> graphd, ', '.join(map(str, row))
+
+        with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/upperMatrixGDAX.txt", 'w') as graphu:
+            for row in upperMatrix:
+                print >> graphu, ', '.join(map(str, row))
+
+        with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/lowerMatrixGDAX.txt", 'w') as graphl:
+            for row in lowerMatrix:
+                print >> graphl, ', '.join(map(str, row))
 
 
             #matrixFileHandle = json.load(matrix)
@@ -353,6 +459,7 @@ if doWhat == m:
 
     lowerValAdd = sum(sumLower)
 
+    print("Peg Values:")
     print(sumLower)
 
     print("Lower buys total cost " + str(lowerValAdd))
@@ -366,8 +473,17 @@ if doWhat == m:
     #print("Total Coin Cost: " + str(upperCost + lowerCost))
 
     y = 0
+    Y = y
     n = 1
+    N = n
     upperPegOrder = {}
+
+    saveVars = input("Do you want to save the variables from the matrix? y or n?")
+
+    if saveVars == y:
+
+        json.dump(matrix_dict, open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/GDAX_matrix_variable_save.txt", 'w'))
+        json.dump(retrace_dict, open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict.txt", 'w'))
 
     exitAns = input("Do you want to exit? y or n?")
 
@@ -375,6 +491,73 @@ if doWhat == m:
         exit()
 
     #for line in matrix:
+
+elif doWhat == s:
+
+    matrixVs = json.load(open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/GDAX_matrix_variable_save.txt"))
+
+
+
+    print("Archived Market Price Saved Matrices were built on: " + str(matrixVs['Market Price']))
+
+    marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
+    jsonPrice = marketPr.json()
+    #print(jsonPrice['ask'])
+    marketPr = float(jsonPrice['ask'])
+    marketCurrent = round(marketPr, 2)
+
+
+    print("Current Market Price: " + str(marketCurrent))
+
+    print("Total Resolution: " + str(matrixVs['Total Resolution']))
+
+    matrixRead = []
+    upperMatrixRead = []
+    lowerMatrixRead = []
+
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py') as f:
+
+        matrixLines = f.read().splitlines()
+        for line4 in matrixLines:
+            tupleNew = line4.split(',')
+
+            matrixRead.append(tupleNew)
+
+    print("This is the matrix:")
+    print(matrixRead)
+
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/upperMatrixGDAX.txt') as f:
+
+        upperMatrixLines = f.read().splitlines()
+        for line4 in upperMatrixLines:
+            tupleNew = line4.split(',')
+
+            upperMatrixRead.append(tupleNew)
+
+    print("This is the upper matrix:")
+    print(upperMatrixRead)
+
+
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/lowerMatrixGDAX.txt') as f:
+
+        lowerMatrixLines = f.read().splitlines()
+        for line4 in lowerMatrixLines:
+            tupleNew = line4.split(',')
+
+            lowerMatrixRead.append(tupleNew)
+
+    print("This is the lower matrix:")
+    print(lowerMatrixRead)
+
+
+    marketP = matrixVs['Market Price']
+    aboveInv = matrixVs['Above Investment']
+    aboveCoins = matrixVs['Above Coins']
+    aboveVol = matrixVs['Above Volume']
+    marketPair = matrixVs['Market Price']
+    lowerMatrix = matrixVs['Market Price']
+    Product_id = matrixVs['Market Pair']
+
 
     buyAbove = input("Do you want to buy your above matrix now? y or n?")
 
@@ -424,7 +607,7 @@ if doWhat == m:
 
     if buildUpper == y:
 
-        for line in upperMatrix:
+        for line in upperMatrixRead:
             upperSide = 'sell'
             upperVol = str(aboveVol)
             upperPeg = str(line[1])
@@ -437,7 +620,7 @@ if doWhat == m:
 
     if buildLower == y:
 
-        for line2 in lowerMatrix:
+        for line2 in lowerMatrixRead:
             lowerSide = 'buy'
             lowerPeg = str(line2[1])
             lowerVol = str(line2[2])
@@ -451,15 +634,24 @@ if doWhat == m:
 
 elif doWhat == e:
 
-    matrixRead = []
 
-    #matrixFromFile = open(
+    matrixVs = json.load(open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/GDAX_matrix_variable_save.txt"))
+
+    print("Market Pair is: " + str(matrixVs['Market Pair']))
+
+    Product_id = matrixVs['Market Pair']
+
+    isTrue = 1
+
+    # matrixFromFile = open(
     #    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py', 'r')
-    #matrixLines = matrixFromFile.readlines()
+    # matrixLines = matrixFromFile.readlines()
 
-    #for line3 in matrixLines:
+    # for line3 in matrixLines:
     #    line3.strip()
     #    matrixRead.append(line3)
+
+    matrixRead = []
 
     with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py') as f:
 
@@ -469,89 +661,96 @@ elif doWhat == e:
 
             matrixRead.append(tupleNew)
 
-
     print("This is the matrix:")
     print(matrixRead)
-    #matrixFromFile.close()
+    # matrixFromFile.close()
+
+    newSide = 'none'
+    newPrice = '0'
+
+    while isTrue == 1:
 
 
-    last_fill_file_handleE = open(
-        '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt', 'r+')
-    last_fill_dealt_withE = last_fill_file_handleE.readline()
-    print('this is the last order_id dealt with ' + last_fill_dealt_withE)
-    last_fill_file_handleE.close()
 
-    requestFills = requests.get(api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
+        last_fill_file_handleE = open(
+            '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt', 'r+')
+        last_fill_dealt_withE = last_fill_file_handleE.readline()
+        print('this is the last order_id dealt with ' + last_fill_dealt_withE)
+        last_fill_file_handleE.close()
 
-    #print(requestFills.json())
-    jump = requestFills.json()
+        requestFills = requests.get(api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
 
-    count2 = 0
-
-    while count2 < 100:
-
-        if jump[count2] == last_fill_dealt_withE:
-            count2 = 101
-
-        else:
-
-            print(jump[count2])
-            eOrderID = jump[count2]['order_id']
-            eSide = jump[count2]['side']
-            eSize = jump[count2]['size']
-            ePrice = jump[count2]['price']
-            eProduct_id = jump[count2]['product_id']
-
-            if count2 == 0:
-                last_order_dealt_withN = eOrderID
-                last_order_file_handle2 = open(
-                    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
-                    'w')
-                last_order_file_handle2.write(str(last_order_dealt_withN))
+        #print(requestFills.json())
+        jump = requestFills.json()
 
 
-            for line5 in matrixRead:
+        count2 = 0
+
+        while count2 < 100:
+
+            if jump[count2] == last_fill_dealt_withE:
+                count2 = 101
+
+            else:
+
+                print(jump[count2])
+                eOrderID = jump[count2]['order_id']
+                eSide = jump[count2]['side']
+                eSize = jump[count2]['size']
+                ePrice = jump[count2]['price']
+                eProduct_id = jump[count2]['product_id']
+
+                if count2 == 0:
+                    last_order_dealt_withN = eOrderID
+                    last_order_file_handle2 = open(
+                        '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
+                        'w')
+                    last_order_file_handle2.write(str(last_order_dealt_withN))
+
                 print("This is matrixRead:")
                 print(matrixRead[count2])
 
-                print("Line 5 is or should be the price read from the matrix:")
-                print(line5[1])
-                mIndex = line5[0]
-                mPrice = line5[1]
-                mVolume = line5[2]
+                for line5 in matrixRead:
 
 
-                if float(ePrice) == float(mPrice):
-                    if eSide == 'buy':
-                        newSide = 'sell'
-                        newPeg = mIndex + 1
-                        newPrice = matrixRead[newPeg][1]
-                        print(newPrice)
+                    #print("This is matrix price at index " + str(line5[0]))
+                    #print(line5[1])
+                    mIndex = line5[0]
+                    mPrice = line5[1]
+                    mVolume = line5[2]
 
 
-                    elif eSide == 'sell':
-                        newSide = 'buy'
-                        newPeg = mIndex - 1
-                        newPrice = matrixRead[newPeg][1]
-                        print(newPrice)
+                    if float(ePrice) == float(mPrice):
+                        if eSide == 'buy':
+                            newSide = 'sell'
+                            newPeg = mIndex + 1
+                            newPrice = matrixRead[newPeg][1]
+                            print(newPrice)
+
+
+                        elif eSide == 'sell':
+                            newSide = 'buy'
+                            newPeg = mIndex - 1
+                            newPrice = matrixRead[newPeg][1]
+                            print(newPrice)
 
 
 
-            engineOrder = {'side': newSide, 'size': eSize, 'price': newPrice, 'product_id': Product_id}
+                    engineOrder = {'side': newSide, 'size': eSize, 'price': newPrice, 'product_id': Product_id}
 
-            r = requests.post(api_url + '/orders', json=engineOrder, auth=auth)
+                    r = requests.post(api_url + '/orders', json=engineOrder, auth=auth)
 
-        count2 += 1
+            count2 += 1
 
 
 
     
-
+'''
     print(jump[0]['order_id'])
     secondID = 'b1b67a1d-5826-4890-a5f1-ec259c331932'
     if jump[0]['order_id'] == secondID :
         print('You win the night!')
-
+'''
     #for line in jump:
     #    print(line)
 

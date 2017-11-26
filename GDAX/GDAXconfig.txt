@@ -1,0 +1,9 @@
+marketP =
+resolutionAbove =
+resolutionBelow =
+marketTop =
+marketBottom =
+spreadAbove =
+spreadBelow =
+marketUpper =
+marketLower =
