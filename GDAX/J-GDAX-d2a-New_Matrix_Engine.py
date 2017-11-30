@@ -576,7 +576,7 @@ elif doWhat == s:
             + " if you say yes? y or n?")
 
         if buyNowAns == y:
-            aboveOrder = {'type': 'market', 'funds': marketOrder, 'product_id': str(marketPair), 'side': 'buy'}
+            aboveOrder = {'type': 'market', 'funds': marketOrder, 'product_id': Product_id, 'side': 'buy'}
 
             s = requests.post(api_url + '/orders', json=aboveOrder, auth=auth)
 
@@ -602,6 +602,8 @@ elif doWhat == s:
                 last_order_file_handle0.close()
                 break
 
+    print(upperMatrixRead[0][1])
+
     buildUpper = input("Do you want to build your upper matrix now? y or no?")
 
 
@@ -610,8 +612,8 @@ elif doWhat == s:
         for line in upperMatrixRead:
             upperSide = 'sell'
             upperVol = str(aboveVol)
-            upperPeg = str(line[1])
-            upperPegOrder = {'side': upperSide, 'price': upperPeg, 'size': upperVol, 'product_id': str(marketPair)}
+            upperPeg = float(line[1])
+            upperPegOrder = {'side': upperSide, 'price': upperPeg, 'size': upperVol, 'product_id': Product_id}
             t = requests.post(api_url + '/orders', json=upperPegOrder, auth=auth)
             print(t.json())
 
@@ -622,9 +624,9 @@ elif doWhat == s:
 
         for line2 in lowerMatrixRead:
             lowerSide = 'buy'
-            lowerPeg = str(line2[1])
-            lowerVol = str(line2[2])
-            lowerPegOrder = {'side': lowerSide, 'price': lowerPeg, 'size': lowerVol, 'product_id': str(marketPair)}
+            lowerPeg = float(line2[1])
+            lowerVol = float(line2[2])
+            lowerPegOrder = {'side': lowerSide, 'price': lowerPeg, 'size': lowerVol, 'product_id': Product_id}
             u = requests.post(api_url + '/orders', json=lowerPegOrder, auth=auth)
             print(u.json())
 
@@ -643,13 +645,6 @@ elif doWhat == e:
 
     isTrue = 1
 
-    # matrixFromFile = open(
-    #    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py', 'r')
-    # matrixLines = matrixFromFile.readlines()
-
-    # for line3 in matrixLines:
-    #    line3.strip()
-    #    matrixRead.append(line3)
 
     matrixRead = []
 
@@ -670,7 +665,12 @@ elif doWhat == e:
 
     while isTrue == 1:
 
+        from pprint import pprint
 
+        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict.txt', 'r') as f:
+            matrixDict = eval(f.read())
+
+        pprint(matrixDict)
 
         last_fill_file_handleE = open(
             '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt', 'r+')
@@ -683,7 +683,62 @@ elif doWhat == e:
         #print(requestFills.json())
         jump = requestFills.json()
 
+        count2 = 0
 
+        while count2 < 1000:
+
+            if jump[count2]['order_id'] == last_fill_dealt_withE:
+                count2 = 1001
+                print("No trades, hold tight, they-ll come")
+                time.sleep(5)
+
+            if count2 < 1000:
+                if jump[0]['order_id'] != last_fill_dealt_withE:
+
+                    for fill in jump:
+                        print("this is fill:")
+                        pprint(fill)
+                        pprint(fill['price'])
+                        pprint(fill['side'])
+                        eSize = fill['size']
+                        Product_id = fill['product_id']
+
+                        if fill['side'] == 'buy':
+                            priceCheck = (fill['price'] + ' buy')
+                            newSide = 'sell'
+
+
+                        elif fill['side']  == 'sell':
+                            priceCheck = (fill['price'] + ' sell')
+                            newSide = 'buy'
+                        roundFill = round(float(fill['price']), 2)
+                        dictPrice = str(roundFill) + ' buy'
+                        print(dictPrice)
+                        stringFill = str(dictPrice)
+                        newPrice = matrix_dict['87.64 buy']
+                        pprint(newPrice)
+
+                        engineOrder = {'side': newSide, 'size': eSize, 'price': newPrice, 'product_id': Product_id}
+
+                        pprint(engineOrder)
+
+                        r = requests.post(api_url + '/orders', json=engineOrder, auth=auth)
+
+                        print(r.json())
+
+
+
+                        exit()
+
+
+
+            #if fill['price'] == matrixVs
+            #if fill['price']:
+
+
+
+
+'''
         count2 = 0
 
         while count2 < 100:
@@ -743,7 +798,7 @@ elif doWhat == e:
             count2 += 1
 
 
-
+'''
     
 '''
     print(jump[0]['order_id'])
