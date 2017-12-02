@@ -6,8 +6,9 @@
 #
 #   easy_install requests
 
-import json, hmac, hashlib, time, requests, base64
+import json, hmac, hashlib, time, requests, base64, pickle
 from requests.auth import AuthBase
+from colorama import Fore, Back
 
 
 
@@ -62,6 +63,8 @@ loopit = True
 
 LTC_USD = 'LTC-USD'
 
+
+
 LTC_BTC = 'LTC-BTC'
 
 BTC_USD = 'BTC-USD'
@@ -105,10 +108,13 @@ if doWhat == m:
 
     if marketPair == a:
         marketDec = 2
+        matrix_dict['marketDec'] = marketDec
     elif marketPair == b:
         marketDec = 6
+        matrix_dict['marketDec'] = marketDec
     elif marketPair == c:
         marketDec = 2
+        matrix_dict['marketDec'] = marketDec
 
 
     # Add a way to set what entry point u want to start your matrix say if market is 75.5
@@ -401,6 +407,16 @@ if doWhat == m:
     saveMatrix = input("Do you want to save the matrices to a local files? y or n")
     if saveMatrix == y:
 
+        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.pickle', 'wb') as handle:
+            pickle.dump(matrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/upperMatrixGDAX.pickle', 'wb') as handle:
+            pickle.dump(upperMatrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/lowerMatrixGDAX.pickle', 'wb') as handle:
+            pickle.dump(lowerMatrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    '''
         with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py", 'w') as graphd:
             for row in matrix:
                 print >> graphd, ', '.join(map(str, row))
@@ -412,7 +428,7 @@ if doWhat == m:
         with open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/lowerMatrixGDAX.txt", 'w') as graphl:
             for row in lowerMatrix:
                 print >> graphl, ', '.join(map(str, row))
-
+    '''
 
             #matrixFileHandle = json.load(matrix)
         #matrixFileHandle.close()
@@ -511,10 +527,30 @@ elif doWhat == s:
 
     print("Total Resolution: " + str(matrixVs['Total Resolution']))
 
-    matrixRead = []
-    upperMatrixRead = []
-    lowerMatrixRead = []
+    #matrixRead = []
+    #upperMatrixRead = []
+    #lowerMatrixRead = []
 
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.pickle', 'rb') as handle:
+        matrixRead = pickle.load(handle)
+
+    print("This is the matrix:")
+    print(matrixRead)
+
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/upperMatrixGDAX.pickle', 'rb') as handle:
+        upperMatrixRead = pickle.load(handle)
+
+    print("This is the upper matrix:")
+    print(upperMatrixRead)
+
+
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/lowerMatrixGDAX.pickle', 'rb') as handle:
+        lowerMatrixRead = pickle.load(handle)
+
+    print("This is the lower matrix:")
+    print(lowerMatrixRead)
+
+    '''
     with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py') as f:
 
         matrixLines = f.read().splitlines()
@@ -546,9 +582,12 @@ elif doWhat == s:
 
             lowerMatrixRead.append(tupleNew)
 
+
+
     print("This is the lower matrix:")
     print(lowerMatrixRead)
 
+    '''
 
     marketP = matrixVs['Market Price']
     aboveInv = matrixVs['Above Investment']
@@ -642,14 +681,17 @@ elif doWhat == e:
     print("Market Pair is: " + str(matrixVs['Market Pair']))
 
     Product_id = matrixVs['Market Pair']
+    marketDec = matrixVs['marketDec']
 
     isTrue = 1
 
+    #matrixRead = []
+    #matrixDict = {}
 
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.pickle', 'rb') as handle:
+        matrixRead = pickle.load(handle)
 
-    matrixRead = []
-    matrixDict = {}
-
+    '''
     with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py') as f:
 
         matrixLines = f.read().splitlines()
@@ -657,6 +699,7 @@ elif doWhat == e:
             tupleNew = line4.split(',')
 
             matrixRead.append(tupleNew)
+    '''
 
     print("This is the matrix:")
     print(matrixRead)
@@ -690,7 +733,20 @@ elif doWhat == e:
 
             if jump[count2]['order_id'] == last_fill_dealt_withE:
                 count2 = 1001
-                print("No trades, hold tight, they-ll come")
+
+                marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
+                jsonPrice = marketPr.json()
+                #print(jsonPrice['ask'])
+                marketPr = float(jsonPrice['ask'])
+                marketP = round(marketPr, 2)
+
+                # requests.post(api_url + '/orders', json=order, auth=auth)
+
+                matrix_dict['Market Price'] = marketP
+
+                print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.GREEN + str(marketP) + Fore.CYAN
+                      + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+
                 time.sleep(5)
 
             if count2 < 1000:
@@ -724,6 +780,25 @@ elif doWhat == e:
                         print("This is mdictKey")
                         print(str(mdictKey))
 
+                        peg = fill['price']
+
+                        rPeg = round(peg, marketDec)
+
+                        strPeg = str(rPeg)
+
+                        pegDollar, pCode = strPeg.split('.')
+
+                        iDollar = int(pegDollar)
+
+                        iCode = int(pCode)
+
+                        if iCode == 98:
+                            rPeggle = .97
+                            rPeg = iDollar + rPeggle
+
+                        if iCode == 45:
+                            rPeggle = .44
+                            rPeg = iDollar + rPeggle
 
                         newKey = fill['price'] + newSide
                         newPrice = matrix_dict[mdictKey]
