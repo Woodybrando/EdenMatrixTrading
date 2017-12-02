@@ -646,7 +646,9 @@ elif doWhat == e:
     isTrue = 1
 
 
+
     matrixRead = []
+    matrixDict = {}
 
     with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py') as f:
 
@@ -670,7 +672,6 @@ elif doWhat == e:
         with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict.txt', 'r') as f:
             matrixDict = eval(f.read())
 
-        pprint(matrixDict)
 
         last_fill_file_handleE = open(
             '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt', 'r+')
@@ -711,11 +712,25 @@ elif doWhat == e:
                         elif fill['side']  == 'sell':
                             priceCheck = (fill['price'] + ' sell')
                             newSide = 'buy'
+
                         roundFill = round(float(fill['price']), 2)
-                        dictPrice = str(roundFill) + ' buy'
+                        dictPrice = str(roundFill)
                         print(dictPrice)
                         stringFill = str(dictPrice)
-                        newPrice = matrix_dict['87.64 buy']
+
+                        print("This is the matrixDict")
+                        pprint(matrixDict)
+                        mdictKey = dictPrice + " " + fill['side']
+                        print("This is mdictKey")
+                        print(str(mdictKey))
+
+
+                        newKey = fill['price'] + newSide
+                        newPrice = matrix_dict[mdictKey]
+                        print("This is the new price")
+                        print(str(newPrice))
+
+
                         pprint(newPrice)
 
                         engineOrder = {'side': newSide, 'size': eSize, 'price': newPrice, 'product_id': Product_id}
