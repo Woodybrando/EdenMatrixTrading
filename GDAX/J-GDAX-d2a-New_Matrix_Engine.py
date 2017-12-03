@@ -681,10 +681,13 @@ elif doWhat == e:
     print("Market Pair is: " + str(matrixVs['Market Pair']))
 
     Product_id = matrixVs['Market Pair']
+    marketPast = matrixVs['Market Price']
     marketDec = matrixVs['marketDec']
+
 
     isTrue = 1
 
+    #newOrdersDict = {}
     #matrixRead = []
     #matrixDict = {}
 
@@ -707,8 +710,11 @@ elif doWhat == e:
 
     newSide = 'none'
     newPrice = '0'
+    lastFill = 0
 
     while isTrue == 1:
+
+        print("This is a fresh start through the Prime Loop")
 
         from pprint import pprint
 
@@ -731,60 +737,136 @@ elif doWhat == e:
 
         while count2 < 1000:
 
-            if jump[count2]['order_id'] == last_fill_dealt_withE:
+            print("This is a loop through the while count2 < 1000 while loop")
+
+            if jump[count2]['order_id'] == str(last_fill_dealt_withE):
+
+                print("This prints when we have an order ID match")
+
                 count2 = 1001
 
                 marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
                 jsonPrice = marketPr.json()
                 #print(jsonPrice['ask'])
                 marketPr = float(jsonPrice['ask'])
-                marketP = round(marketPr, 2)
+                marketP = round(marketPr, marketDec)
+
+
+                #oneFillDict =
 
                 # requests.post(api_url + '/orders', json=order, auth=auth)
 
-                matrix_dict['Market Price'] = marketP
+                matrixVs['Market Price'] = marketP
 
-                print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.GREEN + str(marketP) + Fore.CYAN
-                      + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+                if marketP > marketPast:
+                    print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.GREEN + str(marketP) + Fore.CYAN
+                          + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+
+                elif marketP == marketPast:
+                    print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.RESET + str(marketP) + Fore.CYAN
+                          + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+
+
+                elif marketP < marketPast:
+                    print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.RED + str(marketP) + Fore.CYAN
+                          + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+
+
+                marketPast = marketP
+
+
 
                 time.sleep(5)
 
+
+                if lastFill == jump[count2]['order_id']:
+
+                    print("This prints when we have an order ID match")
+
+                    count2 = 1001
+
+                    marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
+                    jsonPrice = marketPr.json()
+                    #print(jsonPrice['ask'])
+                    marketPr = float(jsonPrice['ask'])
+                    marketP = round(marketPr, marketDec)
+
+
+                    #oneFillDict =
+
+                    # requests.post(api_url + '/orders', json=order, auth=auth)
+
+                    matrixVs['Market Price'] = marketP
+
+                    if marketP > marketPast:
+                        print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.GREEN + str(marketP) + Fore.CYAN
+                              + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+
+                    elif marketP == marketPast:
+                        print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.RESET + str(marketP) + Fore.CYAN
+                              + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+
+
+                    elif marketP < marketPast:
+                        print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.RED + str(marketP) + Fore.CYAN
+                              + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+
+
+                    marketPast = marketP
+
+
+
+                    time.sleep(5)
+
             if count2 < 1000:
-                if jump[0]['order_id'] != last_fill_dealt_withE:
+
+                print("This prints because we didn't have an order id match")
+
+                if jump[0]['order_id'] != str(last_fill_dealt_withE):
 
                     for fill in jump:
-                        print("this is fill:")
+                        print("this is the fill:")
                         pprint(fill)
+                        print("this is the fill price:")
                         pprint(fill['price'])
+                        print("This is the fill side:")
                         pprint(fill['side'])
                         eSize = fill['size']
                         Product_id = fill['product_id']
+                        lastFill = fill['order_id']
 
                         if fill['side'] == 'buy':
                             priceCheck = (fill['price'] + ' buy')
                             newSide = 'sell'
 
-
-                        elif fill['side']  == 'sell':
+                        elif fill['side'] == 'sell':
                             priceCheck = (fill['price'] + ' sell')
                             newSide = 'buy'
 
-                        roundFill = round(float(fill['price']), 2)
+                        roundFill = round(float(fill['price']), marketDec)
                         dictPrice = str(roundFill)
+                        print("This is the dictPrice")
                         print(dictPrice)
                         stringFill = str(dictPrice)
 
                         print("This is the matrixDict")
-                        pprint(matrixDict)
+                        print(matrixDict)
                         mdictKey = dictPrice + " " + fill['side']
+
                         print("This is mdictKey")
                         print(str(mdictKey))
 
-                        peg = fill['price']
+                        floatPrice = float(fill['price'])
+                        roundPrice = round(floatPrice , 2)
 
-                        rPeg = round(peg, marketDec)
+                        newKey = str(roundPrice) + " " + fill['side']
+                        newPrice = matrixDict[mdictKey]
 
-                        strPeg = str(rPeg)
+                        #peg = fill['price']
+
+                        #rPeg = round(peg, marketDec)
+
+                        strPeg = fill['price']
 
                         pegDollar, pCode = strPeg.split('.')
 
@@ -793,32 +875,75 @@ elif doWhat == e:
                         iCode = int(pCode)
 
                         if iCode == 98:
-                            rPeggle = .97
-                            rPeg = iDollar + rPeggle
+                            if newSide == 'buy':
+                                iDollar = iDollar - 2
+                                newPrice = iDollar + iCode
+
+                            elif newSide == 'sell':
+                                iDollar = iDollar + 2
+                                newPrice = iDollar + iCode
 
                         if iCode == 45:
-                            rPeggle = .44
-                            rPeg = iDollar + rPeggle
+                            if newSide == 'buy':
+                                iDollar = iDollar - 5
+                                newPrice = iDollar + iCode
 
-                        newKey = fill['price'] + newSide
-                        newPrice = matrix_dict[mdictKey]
+                            if newSide == 'sell':
+                                iDollar = iDollar + 5
+                                newPrice = iDollar + iCode
+
                         print("This is the new price")
                         print(str(newPrice))
 
-
-                        pprint(newPrice)
+                        #pprint(newPrice)
 
                         engineOrder = {'side': newSide, 'size': eSize, 'price': newPrice, 'product_id': Product_id}
 
+                        print("This is the new order:")
                         pprint(engineOrder)
 
-                        r = requests.post(api_url + '/orders', json=engineOrder, auth=auth)
-
-                        print(r.json())
 
 
+                        if lastFill == str(last_fill_dealt_withE):
 
-                        exit()
+                            count = 1001
+                            jump = {}
+
+
+
+                        if lastFill != str(last_fill_dealt_withE):
+
+                            r = requests.post(api_url + '/orders', json=engineOrder, auth=auth)
+
+                            orderResponse = r.json()
+
+                            #print("This is the order response default print")
+                            #print(orderResponse)
+
+                            print("This is the order response pretty print")
+                            pprint(orderResponse)
+
+                            if count2 == 0:
+                                last_order_dealt_withN = lastFill
+                                last_order_file_handle2 = open(
+                                    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
+                                    'w')
+                                last_order_file_handle2.write(str(last_order_dealt_withN))
+
+
+
+
+
+
+
+                                #last_order_file_handle3 = open(
+                                #    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
+                                #    'w')
+                                #last_order_file_handle3.write(str(lastFill))
+
+
+
+                                #exit()
 
 
 
