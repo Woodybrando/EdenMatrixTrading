@@ -687,22 +687,8 @@ elif doWhat == e:
 
     isTrue = 1
 
-    #newOrdersDict = {}
-    #matrixRead = []
-    #matrixDict = {}
-
     with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.pickle', 'rb') as handle:
         matrixRead = pickle.load(handle)
-
-    '''
-    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.py') as f:
-
-        matrixLines = f.read().splitlines()
-        for line4 in matrixLines:
-            tupleNew = line4.split(',')
-
-            matrixRead.append(tupleNew)
-    '''
 
     print("This is the matrix:")
     print(matrixRead)
@@ -728,22 +714,30 @@ elif doWhat == e:
         print('this is the last order_id dealt with ' + last_fill_dealt_withE)
         last_fill_file_handleE.close()
 
-        requestFills = requests.get(api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
-
-        #print(requestFills.json())
-        jump = requestFills.json()
 
         count2 = 0
+
 
         while count2 < 1000:
 
             print("This is a loop through the while count2 < 1000 while loop")
 
-            if jump[count2]['order_id'] == str(last_fill_dealt_withE):
+
+            requestFills = requests.get(
+                api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
+
+            # print(requestFills.json())
+            jump = requestFills.json()
+
+            outro = False
+
+
+
+            if jump[0]['order_id'] == str(last_fill_dealt_withE):
 
                 print("This prints when we have an order ID match")
 
-                count2 = 1001
+
 
                 marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
                 jsonPrice = marketPr.json()
@@ -774,57 +768,75 @@ elif doWhat == e:
 
                 marketPast = marketP
 
-
+                count2 = 1001
 
                 time.sleep(5)
 
 
-                if lastFill == jump[count2]['order_id']:
-
-                    print("This prints when we have an order ID match")
-
-                    count2 = 1001
-
-                    marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
-                    jsonPrice = marketPr.json()
-                    #print(jsonPrice['ask'])
-                    marketPr = float(jsonPrice['ask'])
-                    marketP = round(marketPr, marketDec)
-
-
-                    #oneFillDict =
-
-                    # requests.post(api_url + '/orders', json=order, auth=auth)
-
-                    matrixVs['Market Price'] = marketP
-
-                    if marketP > marketPast:
-                        print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.GREEN + str(marketP) + Fore.CYAN
-                              + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
-
-                    elif marketP == marketPast:
-                        print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.RESET + str(marketP) + Fore.CYAN
-                              + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
-
-
-                    elif marketP < marketPast:
-                        print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.RED + str(marketP) + Fore.CYAN
-                              + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
-
-
-                    marketPast = marketP
-
-
-
-                    time.sleep(5)
-
-            if count2 < 1000:
+            elif count2 < 1000:
 
                 print("This prints because we didn't have an order id match")
 
-                if jump[0]['order_id'] != str(last_fill_dealt_withE):
+                jumpCount = 0
 
-                    for fill in jump:
+
+
+                #while jump[jumpCount]['order_id'] != str(last_fill_dealt_withE):
+
+                for fill in jump:
+
+                    print("This is number " + str(jumpCount) + " through the jump loop")
+
+                    print("This is the jump order id:")
+                    print(fill['order_id'])
+
+                    print("This is the old order_id:")
+                    print(str(last_fill_dealt_withE))
+
+                    if count2 == 0:
+                        last_order_dealt_withN = fill['order_id']
+                        print("lastFill just got set to:")
+                        print(fill['order_id'])
+
+                    #fill = jump[jumpCount]
+
+                    jumpCount = jumpCount + 1
+
+                    if str(fill['order_id']) == str(last_fill_dealt_withE):
+
+                        last_order_file_handle3 = open(
+                        '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
+                        'w')
+                        last_order_file_handle3.write(str(lastFill))
+                        count = 1001
+
+                        print("Fill Order_Id is a match to the last_fill_dealt_withE")
+
+                        print(str(fill['order_id']))
+
+                        print("This is the final match and the str(last_fill_dealt_withE)")
+
+                        print(str(last_fill_dealt_withE))
+
+                        outro = True
+
+                        print("Break in Match")
+
+                        break
+
+                    elif str(fill['order_id']) != str(last_fill_dealt_withE):
+
+                        if outro is True:
+                            print("Break in Non-Match")
+                            break
+
+                        print("Non-matching fill order_id is:")
+                        print[str(fill['order_id'])]
+                        print("Non-Matching str(last_fill_dealt_withE) is:")
+                        print[str(last_fill_dealt_withE)]
+
+                        #figure out how to print the fill index here
+
                         print("this is the fill:")
                         pprint(fill)
                         print("this is the fill price:")
@@ -850,7 +862,7 @@ elif doWhat == e:
                         stringFill = str(dictPrice)
 
                         print("This is the matrixDict")
-                        print(matrixDict)
+                        pprint(matrixDict)
                         mdictKey = dictPrice + " " + fill['side']
 
                         print("This is mdictKey")
@@ -902,53 +914,45 @@ elif doWhat == e:
                         print("This is the new order:")
                         pprint(engineOrder)
 
+                        print("This is the order_id of the loops current fill:")
+                        print(fill['order_id'])
+
+                        print("Updated orderID is lastFill:")
+                        print(lastFill)
+
+                        print("File Saved orderID is str(last_fill_dealt_withE):")
+                        print(str(last_fill_dealt_withE))
+
+                        r = requests.post(api_url + '/orders', json=engineOrder, auth=auth)
+
+                        orderResponse = r.json()
+
+                        #print("This is the order response default print")
+                        #print(orderResponse)
+
+                        print("This is the order response pretty print")
+                        pprint(orderResponse)
 
 
-                        if lastFill == str(last_fill_dealt_withE):
+                        count2 = count2 + 1
+                        #jumpCount = jumpCount + 1
 
-                            count = 1001
-                            jump = {}
+                time.sleep(5)
 
-
-
-                        if lastFill != str(last_fill_dealt_withE):
-
-                            r = requests.post(api_url + '/orders', json=engineOrder, auth=auth)
-
-                            orderResponse = r.json()
-
-                            #print("This is the order response default print")
-                            #print(orderResponse)
-
-                            print("This is the order response pretty print")
-                            pprint(orderResponse)
-
-                            if count2 == 0:
-                                last_order_dealt_withN = lastFill
-                                last_order_file_handle2 = open(
-                                    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
-                                    'w')
-                                last_order_file_handle2.write(str(last_order_dealt_withN))
-
-
-
-
+                if x is False:
+                    print("Big loop break")
+                    break
 
 
 
-                                #last_order_file_handle3 = open(
-                                #    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
-                                #    'w')
-                                #last_order_file_handle3.write(str(lastFill))
 
 
 
-                                #exit()
 
 
 
-            #if fill['price'] == matrixVs
-            #if fill['price']:
+
+
 
 
 
