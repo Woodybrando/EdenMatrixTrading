@@ -58,6 +58,7 @@ order = {}
 matrix_dict = {}
 pillar_dict = {}
 retrace_dict = {}
+pillars_retrace_dict = {}
 loopit = True
 
 #run_once = 0
@@ -294,15 +295,9 @@ if doWhat == m:
     pegMakerU = marketP
     pegMakerL = marketP
 
-
-
     lNumber = resolutionBelow - 2
     mNumber = resolutionBelow - 1
     uNumber = resolutionBelow
-
-    #lNumber = 23
-    #mNumber = 24
-    #uNumber = 25
 
     print("Count is " + str(count))
 
@@ -312,8 +307,6 @@ if doWhat == m:
 
         peg = pegMakerU + upperSpread
 
-        #print("Count is " + str(count))
-        #print("Peg is " + str(peg))
 
         if count > mNumber:
 
@@ -433,7 +426,6 @@ if doWhat == m:
 
     print("Upper coin cost " + str(upperCost) )
 
-
     sumLower = []
 
     for line in lowerMatrix:
@@ -451,7 +443,6 @@ if doWhat == m:
     totalMatrixCost = upperCost + lowerValAdd
 
     print("Total Matrix Cost " + str(totalMatrixCost))
-
 
     pillarAsk = input("Do you want to add a matrix of pillars? y or n?")
 
@@ -478,7 +469,7 @@ if doWhat == m:
 
         pillar_dict['Pillar Above Buy'] = upperBuyP
 
-        lowerBuyP = pillarBuy - upperBuyP
+        lowerBuyP = pillarBuy - aboveInvP
 
         pillar_dict['Pillar Below Buy'] = lowerBuyP
 
@@ -521,11 +512,11 @@ if doWhat == m:
         upperSpreadP = (pillarTop - marketP) / (resolutionAboveP)
         lowerSpreadP = (marketP - pillarBottom) / (resolutionBelowP)
 
-        pillar_dict['Upper Spread'] = upperSpreadP
-        pillar_dict['Lower Spread'] = lowerSpreadP
+        pillar_dict['Pillar Upper Spread'] = upperSpreadP
+        pillar_dict['Pillar Lower Spread'] = lowerSpreadP
 
-        print("Upper Spread " + str(upperSpreadP))
-        print("Lower Spread " + str(lowerSpreadP))
+        print("Pillar Upper Spread " + str(upperSpreadP))
+        print("Pillar Lower Spread " + str(lowerSpreadP))
 
         pillarUpper = marketP + (upperSpreadP / 2)
         pillarLower = marketP - (lowerSpreadP / 2)
@@ -536,8 +527,8 @@ if doWhat == m:
         print("MarketUpper is " + str(pillarUpper))
         print("MarketLower is " + str(pillarLower))
 
-
         aboveVolP = aboveCoinsP / resolutionAboveP
+        belowValP = lowerBuyP / resolutionBelowP
 
         pillar_dict['Pillar Above Volume'] = pillarUpper
 
@@ -553,20 +544,20 @@ if doWhat == m:
 
         pillar_dict['Total Resolution'] = resolutionP
 
-        countP = resolutionAboveP + resolutionBelowP + 1
+        countP = resolutionAboveP + resolutionBelowP
 
         pillarMakerU = marketP
         pillarMakerL = marketP
 
-        lNumberP = resolutionBelowP - 2
-        mNumberP = resolutionBelowP - 1
-        uNumberP = resolutionBelowP
+        lNumberP = resolutionBelowP - 1
+        mNumberP = resolutionBelowP
+        uNumberP = resolutionBelowP + 1
 
         print("Count is " + str(countP))
 
-        print("Current Market Price: " + str(marketPr))
+        print("Current Market Price: " + str(marketP))
 
-        while count > -1:
+        while countP > -1:
 
             pegP = pillarMakerU + upperSpreadP
 
@@ -584,12 +575,17 @@ if doWhat == m:
 
                 iCodeP = int(pCodeP)
 
-                if iCodeP == 98:
-                    rPeggleP = .97
+                if iCodeP < 35:
+                    rPeggleP = .98
+                    iDollarP = iDollarP - 1
                     rPegP = iDollarP + rPeggleP
 
-                if iCodeP == 45:
-                    rPeggleP = .44
+                elif iCodeP > 88:
+                    rPeggleP = .98
+                    rPegP = iDollarP + rPeggleP
+
+                if iCodeP >= 35 <= 87:
+                    rPeggleP = .48
                     rPegP = iDollarP + rPeggleP
 
                 listP = uNumberP, rPegP, round(volumeP, 4)
@@ -600,7 +596,30 @@ if doWhat == m:
 
             elif countP == mNumberP:
                 pegP = marketP
-                rPegP = round(pegP, 2)
+
+                rPegP = round(pegP, marketDec)
+
+                strPegP = str(rPegP)
+
+                pegDollarP, pCodeP = strPegP.split('.')
+
+                iDollarP = int(pegDollarP)
+
+                iCodeP = int(pCodeP)
+
+                if iCodeP < 35:
+                    rPeggleP = .98
+                    iDollarP = iDollarP - 1
+                    rPegP = iDollarP + rPeggleP
+
+                elif iCodeP > 88:
+                    rPeggleP = .98
+                    rPegP = iDollarP + rPeggleP
+
+                if iCodeP >= 35 <= 87:
+                    rPeggleP = .48
+                    rPegP = iDollarP + rPeggleP
+
                 volumeP = aboveVolP
                 numberP = mNumberP
                 listP = numberP, rPegP, round(volumeP, 4)
@@ -624,12 +643,17 @@ if doWhat == m:
 
                     iCodeP = int(pCodeP)
 
-                    if iCodeP == 98:
-                        rPeggleP = .97
+                    if iCodeP < 35:
+                        rPeggleP = .98
+                        iDollarP = iDollarP - 1
                         rPegP = iDollarP + rPeggleP
 
-                    if iCodeP == 45:
-                        rPeggleP = .44
+                    elif iCodeP > 88:
+                        rPeggleP = .98
+                        rPegP = iDollarP + rPeggleP
+
+                    if iCodeP >= 35 <= 87:
+                        rPeggleP = .48
                         rPegP = iDollarP + rPeggleP
 
                     listP = lNumberP, rPegP, round(volumeP, 4)
@@ -639,6 +663,27 @@ if doWhat == m:
                     lNumberP = lNumberP - 1
 
             countP = countP - 1
+            print("Count is " + str(countP))
+
+    pillars.sort(key=lambda x: x[1])
+
+    for line6 in pillars:
+        if line6[0] == 0:
+            print("This is the matrix peg price: " + str(line6[1]))
+            pillars_retrace_dict[str(line6[1]) + ' buy'] = pillars[(line6[0] + 1)]
+            print("Market hit your bottom pillar")
+
+        elif line6[0] == resolutionP:
+            print("This is the matrix peg price: " + str(line6[1]))
+            pillars_retrace_dict[str(line6[1]) + ' sell'] = pillars[(line6[0] - 1)][1]
+            print("Market hit your top pillar")
+
+        else:
+            print("This is the pillar peg price: " + str(line6[1]))
+            pillars_retrace_dict[str(line6[1]) + ' buy'] = pillars[(line6[0] + 1)][1]
+            pillars_retrace_dict[str(line6[1]) + ' sell'] = pillars[(line6[0] - 1)][1]
+
+    print(pillars)
 
     y = 0
     Y = y
@@ -650,9 +695,14 @@ if doWhat == m:
 
     if saveVars == y:
 
-        json.dump(matrix_dict, open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/GDAX_matrix_variable_save.txt", 'w'))
-        json.dump(retrace_dict, open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict.txt", 'w'))
-        json.dump(pillar_dict, open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillarDict.txt", 'w'))
+        json.dump(matrix_dict, open(
+            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/GDAX_matrix_variable_save.txt", 'w'))
+        json.dump(retrace_dict, open(
+            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict.txt", 'w'))
+        json.dump(pillar_dict, open(
+            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillarDict.txt", 'w'))
+        json.dump(pillars_retrace_dict, open(
+            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillars_retraceDict.txt", 'w'))
 
     exitAns = input("Do you want to exit? y or n?")
 
