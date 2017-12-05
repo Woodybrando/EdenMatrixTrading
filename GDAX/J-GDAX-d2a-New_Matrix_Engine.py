@@ -544,20 +544,20 @@ if doWhat == m:
 
         pillar_dict['Total Resolution'] = resolutionP
 
-        countP = resolutionAboveP + resolutionBelowP
+        countP = resolutionAboveP + resolutionBelowP + 1
 
         pillarMakerU = marketP
         pillarMakerL = marketP
 
-        lNumberP = resolutionBelowP - 1
-        mNumberP = resolutionBelowP
-        uNumberP = resolutionBelowP + 1
+        lNumberP = resolutionBelowP
+        mNumberP = resolutionBelowP + 1
+        uNumberP = resolutionBelowP + 2
 
         print("Count is " + str(countP))
 
         print("Current Market Price: " + str(marketP))
 
-        while countP > -1:
+        while countP >= 0:
 
             pegP = pillarMakerU + upperSpreadP
 
