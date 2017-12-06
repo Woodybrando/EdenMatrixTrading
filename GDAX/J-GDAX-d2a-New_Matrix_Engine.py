@@ -665,25 +665,28 @@ if doWhat == m:
             countP = countP - 1
             print("Count is " + str(countP))
 
-    pillars.sort(key=lambda x: x[1])
+        pillars.sort(key=lambda x: x[1])
 
-    for line6 in pillars:
-        if line6[0] == 0:
-            print("This is the matrix peg price: " + str(line6[1]))
-            pillars_retrace_dict[str(line6[1]) + ' buy'] = pillars[(line6[0] + 1)]
-            print("Market hit your bottom pillar")
+        for line6 in pillars:
+            if line6[0] == 0:
+                print("This is the matrix peg price: " + str(line6[1]))
+                pillars_retrace_dict[str(line6[1]) + ' buy'] = pillars[(line6[0] + 1)]
+                print("Market hit your bottom pillar")
 
-        elif line6[0] == resolutionP:
-            print("This is the matrix peg price: " + str(line6[1]))
-            pillars_retrace_dict[str(line6[1]) + ' sell'] = pillars[(line6[0] - 1)][1]
-            print("Market hit your top pillar")
+            elif line6[0] == resolutionP:
+                print("This is the matrix peg price: " + str(line6[1]))
+                pillars_retrace_dict[str(line6[1]) + ' sell'] = pillars[(line6[0] - 1)][1]
+                print("Market hit your top pillar")
 
-        else:
-            print("This is the pillar peg price: " + str(line6[1]))
-            pillars_retrace_dict[str(line6[1]) + ' buy'] = pillars[(line6[0] + 1)][1]
-            pillars_retrace_dict[str(line6[1]) + ' sell'] = pillars[(line6[0] - 1)][1]
+            else:
+                print("This is the pillar peg price: " + str(line6[1]))
+                pillars_retrace_dict[str(line6[1]) + ' buy'] = pillars[(line6[0] + 1)][1]
+                pillars_retrace_dict[str(line6[1]) + ' sell'] = pillars[(line6[0] - 1)][1]
 
-    print(pillars)
+        print(pillars)
+
+        json.dump(pillars_retrace_dict, open(
+            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillars_retraceDict.txt", 'w'))
 
     y = 0
     Y = y
@@ -701,8 +704,6 @@ if doWhat == m:
             "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict.txt", 'w'))
         json.dump(pillar_dict, open(
             "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillarDict.txt", 'w'))
-        json.dump(pillars_retrace_dict, open(
-            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillars_retraceDict.txt", 'w'))
 
     exitAns = input("Do you want to exit? y or n?")
 
@@ -854,7 +855,20 @@ elif doWhat == e:
         requestFills = requests.get(
             api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
 
+        print(requestFills.status_code)
+
+        if requestFills.status_code != 200:
+            reconCount = 0
+            while reconCount < 20:
+                requestFills = requests.get(
+                api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
+                time.sleep(3)
+                reconCount = reconCount + 1
+
+
+
         jump = requestFills.json()
+
 
         print(jump)
 
@@ -1014,9 +1028,11 @@ elif doWhat == e:
                     print("File Saved orderID is str(last_fill_dealt_withE):")
                     print(str(last_fill_dealt_withE))
 
-                    time.sleep(3)
+                    time.sleep(2)
 
                     r = requests.post(api_url + '/orders', json=engineOrder, auth=auth)
+
+                    print("Order Status code is " + str(r.status_code))
 
                     time.sleep(1)
 
@@ -1035,3 +1051,21 @@ elif doWhat == e:
             if x is False:
                 print("Big loop break")
                 break
+
+
+'''
+Traceback (most recent call last):
+  File "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/J-GDAX-d2a-New_Matrix_Engine.py", line 855, in <module>
+    api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
+  File "/Library/Python/2.7/site-packages/requests/api.py", line 72, in get
+    return request('get', url, params=params, **kwargs)
+  File "/Library/Python/2.7/site-packages/requests/api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/Library/Python/2.7/site-packages/requests/sessions.py", line 508, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Library/Python/2.7/site-packages/requests/sessions.py", line 618, in send
+    r = adapter.send(request, **kwargs)
+  File "/Library/Python/2.7/site-packages/requests/adapters.py", line 490, in send
+    raise ConnectionError(err, request=request)
+requests.exceptions.ConnectionError: ('Connection aborted.', error(54, 'Connection reset by peer'))
+'''
