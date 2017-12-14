@@ -135,7 +135,22 @@ if doWhat == m:
 
     elif howPrice == y:
         marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
-        time.sleep(2)
+
+        time.sleep(1)
+
+        print(marketPr.status_code)
+
+        if marketPr.status_code != 200:
+            reconCount = 0
+            while reconCount < 20:
+                marketPr = requests.get(
+                    api_url + '/products/LTC-USD/ticker')
+                time.sleep(2)
+                reconCount = reconCount + 1
+                print(marketPr.status_code)
+                if marketPr.status_code == 200:
+                    count = 21
+
         jsonPrice = marketPr.json()
         print(jsonPrice['ask'])
         marketPr = float(jsonPrice['ask'])
@@ -855,7 +870,7 @@ elif doWhat == e:
         requestFills = requests.get(
             api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
 
-        print(requestFills.status_code)
+        print("Fills Request status code is " + str(requestFills.status_code))
 
         if requestFills.status_code != 200:
             reconCount = 0
@@ -864,8 +879,8 @@ elif doWhat == e:
                 api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
                 time.sleep(3)
                 reconCount = reconCount + 1
-
-
+                if requestFills.status_code == 200:
+                    count = 21
 
         jump = requestFills.json()
 
@@ -877,7 +892,22 @@ elif doWhat == e:
             print("This prints when we have an order ID match")
 
             marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
-            time.sleep(2)
+
+            time.sleep(1)
+
+            print(marketPr.status_code)
+
+            if marketPr.status_code != 200:
+                reconCount = 0
+                while reconCount < 20:
+                    marketPr = requests.get(
+                        api_url + '/products/LTC-USD/ticker')
+                    time.sleep(2)
+                    reconCount = reconCount + 1
+                    print(marketPr.status_code)
+                    if marketPr.status_code == 200:
+                        reconCount = 21
+
             jsonPrice = marketPr.json()
             marketPr = float(jsonPrice['ask'])
             marketP = round(marketPr, marketDec)
@@ -1034,6 +1064,17 @@ elif doWhat == e:
 
                     print("Order Status code is " + str(r.status_code))
 
+                    if r.status_code != 200:
+                        reconCount = 0
+                        while reconCount < 20:
+
+                            r = requests.post(
+                                api_url + '/orders', json=engineOrder, auth=auth)
+                            time.sleep(2)
+                            reconCount = reconCount + 1
+                            if requestFills.status_code == 200:
+                                count = 21
+
                     time.sleep(1)
 
                     orderResponse = r.json()
@@ -1054,8 +1095,41 @@ elif doWhat == e:
 
 
 '''
+  File "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/J-GDAX-d2a-New_Matrix_Engine.py", line 1014, in <module>
+    newPrice = matrixDict[mdictKey]
+KeyError: u'292.06 sell'
+
 Traceback (most recent call last):
-  File "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/J-GDAX-d2a-New_Matrix_Engine.py", line 855, in <module>
+  File "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/J-GDAX-d2a-New_Matrix_Engine.py", line 1014, in <module>
+    newPrice = matrixDict[mdictKey]
+KeyError: u'369.29 buy'
+
+Traceback (most recent call last):
+  File "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/J-GDAX-d2a-New_Matrix_Engine.py", line 1014, in <module>
+    newPrice = matrixDict[mdictKey]
+KeyError: u'335.0 buy'
+
+This prints when we have an order ID match
+Traceback (most recent call last):
+  File "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/J-GDAX-d2a-New_Matrix_Engine.py", line 879, in <module>
+    marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
+  File "/Library/Python/2.7/site-packages/requests/api.py", line 72, in get
+    return request('get', url, params=params, **kwargs)
+  File "/Library/Python/2.7/site-packages/requests/api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/Library/Python/2.7/site-packages/requests/sessions.py", line 508, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Library/Python/2.7/site-packages/requests/sessions.py", line 618, in send
+    r = adapter.send(request, **kwargs)
+  File "/Library/Python/2.7/site-packages/requests/adapters.py", line 508, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.gdax.com', port=443): Max retries exceeded with url: /products/LTC-USD/ticker (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x10cc3c590>: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known',))
+
+Process finished with exit code 1
+
+this is the last order_id dealt with 9a3d9a2f-e5bc-4430-a975-3f631e323c17
+Traceback (most recent call last):
+  File "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/J-GDAX-d2a-New_Matrix_Engine.py", line 871, in <module>
     api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
   File "/Library/Python/2.7/site-packages/requests/api.py", line 72, in get
     return request('get', url, params=params, **kwargs)
@@ -1068,4 +1142,6 @@ Traceback (most recent call last):
   File "/Library/Python/2.7/site-packages/requests/adapters.py", line 490, in send
     raise ConnectionError(err, request=request)
 requests.exceptions.ConnectionError: ('Connection aborted.', error(54, 'Connection reset by peer'))
+
+
 '''
