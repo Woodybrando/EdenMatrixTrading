@@ -108,20 +108,29 @@ if doWhat == m:
 
     marketPair = input("Enter the letter of the market pair u want to trade in? a. LTC_USD b. LTC_BTC c. BTC_USD?")
 
+    print(str(b))
+
     if marketPair == a:
         marketDec = 2
         matrix_dict['marketDec'] = marketDec
+        matrix_dict['Market Pair'] = 'LTC-USD'
+        print('Market pair is ' + matrix_dict['Market Pair'])
+
     elif marketPair == b:
-        marketDec = 6
+        marketDec = 5
         matrix_dict['marketDec'] = marketDec
+        matrix_dict['Market Pair'] = 'LTC-BTC'
+        print('You pressed b')
+        print('Market pair is ' + matrix_dict['Market Pair'])
+
     elif marketPair == c:
         marketDec = 2
         matrix_dict['marketDec'] = marketDec
+        matrix_dict['Market Pair'] = 'BTC-USD'
+        print('Market pair is ' + matrix_dict['Market Pair'])
 
     # Add a way to set what entry point u want to start your matrix say if market is 75.5
     # and u want to start only if price = 73
-
-    matrix_dict['Market Pair'] = marketPair
 
     marketPr = {}
 
@@ -130,10 +139,12 @@ if doWhat == m:
     if howPrice == x:
         marketP = input("What is the current market price?")
 
-
-
     elif howPrice == y:
-        marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
+        marketPr = requests.get(api_url + '/products/' + matrix_dict['Market Pair'] + '/ticker')
+        marketLTC = requests.get(api_url + '/products/LTC-USD/ticker')
+        marketBTC = requests.get(api_url + '/products/BTC-USD/ticker')
+
+        print(str(marketPr))
 
         time.sleep(1)
 
@@ -143,7 +154,9 @@ if doWhat == m:
             reconCount = 0
             while reconCount < 20:
                 marketPr = requests.get(
-                    api_url + '/products/LTC-USD/ticker')
+                    api_url + '/products/' + matrix_dict['Market Pair'] + '/ticker')
+                marketLTC = requests.get(api_url + '/products/LTC-USD/ticker')
+                marketBTC = requests.get(api_url + '/products/BTC-USD/ticker')
                 time.sleep(2)
                 reconCount = reconCount + 1
                 print(marketPr.status_code)
@@ -151,14 +164,38 @@ if doWhat == m:
                     count = 21
 
         jsonPrice = marketPr.json()
-        print(jsonPrice['ask'])
+        jsonLTC = marketLTC.json()
+        jsonBTC = marketBTC.json()
+
+        print('LTC/BTC Market Price is ' + jsonPrice['ask'])
         marketPr = float(jsonPrice['ask'])
-        marketP = round(marketPr, 2)
+        marketP = round(marketPr, marketDec)
+
+        print('LTC Market Price is ' + jsonLTC['ask'])
+        marketLTC = float(jsonLTC['ask'])
+        marketLTC = round(marketLTC, 2)
+
+        print('BTC Market Price is ' + jsonBTC['ask'])
+        marketBTC = float(jsonBTC['ask'])
+        marketBTC = round(marketBTC, 2)
 
     #requests.post(api_url + '/orders', json=order, auth=auth)
 
-
     matrix_dict['Market Price'] = marketP
+    matrix_dict['LTC Price'] = marketLTC
+    matrix_dict['BTC Price'] = marketBTC
+
+    if marketPair == a:
+        aboveCoin = marketP
+        belowCoin = marketP
+
+    if marketPair == b:
+        aboveCoin = matrix_dict['LTC Price']
+        belowCoin = matrix_dict['BTC Price']
+
+    if marketPair == c:
+        aboveCoin = marketP
+        belowCoin = marketP
 
     initInv = input("How much do you want to invest aka amount u can lose and still pay all your bills? \n"
                     "i.e. 1000 or 5273")
@@ -181,13 +218,13 @@ if doWhat == m:
 
     matrix_dict['Above Buy'] = upperBuy
 
-    lowerBuy = initInv - upperBuy
+    lowerBuy = initInv - aboveInv
 
     matrix_dict['Below Buy'] = lowerBuy
 
     print("Upper Cost minus Fee " + str(upperBuy))
 
-    aboveCoins = aboveInv/marketP
+    aboveCoins = aboveInv/aboveCoin
 
     matrix_dict['Above Coins'] = aboveCoins
 
@@ -207,7 +244,7 @@ if doWhat == m:
     matrix_dict['Resolution Above'] = resolutionAbove
     matrix_dict['Resolution Below'] = resolutionBelow
 
-    aboveVol = round(aboveCoins/(resolutionAbove), 4)
+    aboveVol = round(aboveCoins/resolutionAbove, 4)
 
     matrix_dict['Above Volume'] = aboveVol
 
@@ -228,15 +265,19 @@ if doWhat == m:
 
     print("Below Investment: " + str(belowBuys))
 
-    unroundVal = belowBuys/(resolutionBelow)
+    unroundVal = belowBuys/resolutionBelow
 
     matrix_dict['Unrounded Below Peg Value'] = unroundVal
 
     belowVal = round(unroundVal, 4)
 
+    coinBelow = marketLTC/belowVal
+
     matrix_dict['Below Peg Value'] = belowVal
+    matrix_dict['Coin Below'] = coinBelow
 
     print("Below Value Per Peg: " + str(belowVal))
+    print("Below Value Per Peg: " + str(coinBelow))
 
     h = 1
     H = h
@@ -273,24 +314,14 @@ if doWhat == m:
     print("Market Bottom " +  str(marketBottom))
 
 
-    upperSpread = (marketTop - marketP) / (resolutionAbove)
-    lowerSpread = (marketP - marketBottom) / (resolutionBelow)
+    upperSpread = (marketTop - marketP) / resolutionAbove
+    lowerSpread = (marketP - marketBottom) / resolutionBelow
 
     matrix_dict['Upper Spread'] = upperSpread
     matrix_dict['Lower Spread'] = lowerSpread
 
     print("Upper Spread " + str(upperSpread))
     print("Lower Spread " + str(lowerSpread))
-
-    marketUpper = marketP + (upperSpread / 2)
-    marketLower = marketP - (lowerSpread / 2)
-
-    matrix_dict['Market Upper'] = marketUpper
-    matrix_dict['Market Lower'] = marketLower
-
-    print("MarketUpper is " + str(marketUpper))
-    print("MarketLower is " + str(marketLower))
-
 
     peg = 0
     number = 0
@@ -309,62 +340,78 @@ if doWhat == m:
     pegMakerU = marketP
     pegMakerL = marketP
 
-    lNumber = resolutionBelow - 2
-    mNumber = resolutionBelow - 1
-    uNumber = resolutionBelow
+    lNumber = resolutionBelow - 1
+    mNumber = resolutionBelow
+    uNumber = resolutionBelow + 1
 
+    lowerCounter = resolutionBelow - 1
+
+    print('lNumber is ' + str(lNumber))
+    print('mNumber is ' + str(mNumber))
+    print('uNumber is ' + str(uNumber))
     print("Count is " + str(count))
-
     print("Current Market Price: " + str(marketPr))
 
-    while count > -1:
+    counter = 0
+    peg = marketP
 
-        peg = pegMakerU + upperSpread
+    while counter < count:
 
+        if counter > mNumber:
 
-        if count > mNumber:
+            peg = peg + upperSpread
 
             volume = aboveVol
 
-            rPeg = round(peg, marketDec)
+            if marketPair != b:
 
-            strPeg = str(rPeg)
+                rPeg = round(peg, marketDec)
 
-            pegDollar, pCode = strPeg.split('.')
+                strPeg = str(rPeg)
 
-            iDollar = int(pegDollar)
+                pegDollar, pCode = strPeg.split('.')
 
-            iCode = int(pCode)
+                iDollar = int(pegDollar)
 
-            if iCode == 98:
-                rPeggle = .97
-                rPeg = iDollar + rPeggle
+                iCode = int(pCode)
 
-            if iCode == 45:
-                rPeggle = .44
-                rPeg = iDollar + rPeggle
+                if iCode == 98:
+                    rPeggle = .97
+                    rPeg = iDollar + rPeggle
 
-            list = uNumber, rPeg, round(volume, 4)
+                if iCode == 45:
+                    rPeggle = .44
+                    rPeg = iDollar + rPeggle
+                peg = rPeg
+
+            peg = round(peg, marketDec)
+            list = counter, peg, round(volume, 4)
             matrix.append(list)
             upperMatrix.append(list)
             pegMakerU = peg
+
+            print('Counter is ' + str(counter))
+            print('pegMakerU is ' + str(pegMakerU))
+
             uNumber = uNumber + 1
 
-        elif count == mNumber:
+        elif counter == mNumber:
             peg = marketP
-            rPeg = round(peg, 2)
             volume = aboveVol
-            number = mNumber
-            list = number, rPeg, round(volume, 4)
+            list = counter, peg, round(volume, 4)
             matrix.append(list)
 
-        elif count < mNumber:
+            print('Counter is ' + str(counter))
+
+        elif counter < mNumber:
             peg = pegMakerL - lowerSpread
+            volume = peg / belowVal
 
-            if peg >= (marketBottom):
+            if marketPair == b:
+                nonFiatVal = lowerPegValue / marketBTC
+                volume = nonFiatVal/peg
 
-                belowVol = belowVal / peg
-                volume = belowVol
+            if marketPair != b:
 
                 rPeg = round(peg, marketDec)
 
@@ -384,13 +431,23 @@ if doWhat == m:
                     rPeggle = .44
                     rPeg = iDollar + rPeggle
 
-                list = lNumber, rPeg, round(volume, 4)
-                matrix.append(list)
-                lowerMatrix.append(list)
-                pegMakerL = pegMakerL - lowerSpread
-                lNumber = lNumber - 1
+                peg = rPeg
 
-        count = count - 1
+            peg = round(peg, marketDec)
+            list = lowerCounter , peg, round(volume, 4)
+            matrix.append(list)
+            lowerMatrix.append(list)
+            print('pegMakerL is ' + str(pegMakerL))
+            print('Counter is ' + str(counter))
+            print('lowerCounter is ' + str(lowerCounter))
+
+            pegMakerL = pegMakerL - lowerSpread
+            lowerCounter = lowerCounter - 1
+
+
+
+
+        counter = counter + 1
 
     matrix.sort(key=lambda x: x[1])
 
@@ -399,14 +456,18 @@ if doWhat == m:
             print("This is the matrix peg price: " + str(line6[1]))
             retrace_dict[str(line6[1]) + ' buy'] = matrix[(line6[0] + 1)]
             print("Market hit your matrix bottom")
+            print(line6)
 
         elif line6[0] == resolution:
             print("This is the matrix peg price: " + str(line6[1]))
             retrace_dict[str(line6[1]) + ' sell'] = matrix[(line6[0] - 1)][1]
             print("Market hit your matrix top")
+            print(line6)
+            print("Matrix Resolution is " + str(resolution))
 
         else:
             print("This is the matrix peg price: " + str(line6[1]))
+            print(line6)
             retrace_dict[str(line6[1]) + ' buy'] = matrix[(line6[0] + 1)][1]
             retrace_dict[str(line6[1]) + ' sell'] = matrix[(line6[0] - 1)][1]
 
@@ -532,19 +593,8 @@ if doWhat == m:
         print("Pillar Upper Spread " + str(upperSpreadP))
         print("Pillar Lower Spread " + str(lowerSpreadP))
 
-        pillarUpper = marketP + (upperSpreadP / 2)
-        pillarLower = marketP - (lowerSpreadP / 2)
-
-        pillar_dict['Market Upper'] = pillarUpper
-        pillar_dict['Market Lower'] = pillarLower
-
-        print("MarketUpper is " + str(pillarUpper))
-        print("MarketLower is " + str(pillarLower))
-
         aboveVolP = aboveCoinsP / resolutionAboveP
         belowValP = lowerBuyP / resolutionBelowP
-
-        pillar_dict['Pillar Above Volume'] = pillarUpper
 
         pegP = 0
         numberP = 0
@@ -559,13 +609,9 @@ if doWhat == m:
         pillar_dict['Total Resolution'] = resolutionP
 
         countP = resolutionAboveP + resolutionBelowP + 1
-
         pillarMakerU = marketP
         pillarMakerL = marketP
-
-        lNumberP = resolutionBelowP
         mNumberP = resolutionBelowP + 1
-        uNumberP = resolutionBelowP + 2
 
         print("Count is " + str(countP))
 
@@ -719,10 +765,14 @@ if doWhat == m:
         json.dump(pillar_dict, open(
             "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillarDict.txt", 'w'))
 
-    exitAns = input("Do you want to exit? y or n?")
+    exitAns = input("Do you want to exit or set up a matrix? y or s?")
 
     if exitAns == y:
         exit()
+
+    else:
+
+        doWhat = s
 
 elif doWhat == s:
 
