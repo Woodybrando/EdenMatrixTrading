@@ -44,6 +44,14 @@ Formatting is important, please use [YAPF](https://github.com/google/yapf/blob/m
 
 Please see [How It Works](HOWITWORKS.md) for the overview of how this trading works.
 
+## Note 
+ 
+There are two different implementations of EDEN Trading style. 
+The Bryn_method and the Original method currently operate on different branches
+The Bryn method lives on branch Eden_Wex but if the Original method is applied
+to Wex market too, we will rename accordingly. currently they vary with 
+config file data and syntax of Matrix file, as well as implementation of strategy.
+
 ## Manifesto
 
 Please see the [MANIFESTO](MANIFESTO.md) for the purpose of this project.

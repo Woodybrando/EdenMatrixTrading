@@ -294,8 +294,6 @@ last_matrix_gap_idx = -1
 recent_trades = False
 perform_retrace_trade_orders = 1
 config_filename = ""
-# Vanny - change when you run on new market
-config_filename = "/Users/vannycat/PycharmProjects/EdenMatrixTrading/Bryn_wex_dsh_ltc/config_wex_dsh_ltc.json"
 
 ####################################################################################
 ### GUI STUFF HERE
@@ -486,12 +484,9 @@ if matrix_established == 0:
         current_tpair_mprice = depth[0][1][0]
         initial_tpair_mprice = depth[0][1][0]
 
-    # Debug vanny - just assign market prices for now.
     # Need to query market and put this in
     elif config["exchange_choice"] == "gdax.com":
-        #current_tpair_mprice = .00930
-        #initial_tpair_mprice = .00930
-        print "Please set current tpair price manually in software or in config file."
+        print "Eden_WEX is not currently implemented for gdax market"
         exit(1)
     else:
         debugfile.write("We don't have software created for markets other than wex.nz and gdax.com yet. Stay tuned!\n")
@@ -595,12 +590,11 @@ if matrix_established == 0:
 
     # EDEN: BUY (moonbasket_coins_count) @ (initial_tpair_mprice)
     # EDEN: AND CONFIRM TRANSACTION
-    # Vanny 121417
     if dont_trade != 1:
-        # trade_success, order_id = trade(config["tpair"], initial_tpair_mprice, "buy", moonbasket_coins_count)
-        #if trade_success != 1:
-        #    debugfile.write("Error Purchasing Moonbasket Coins (" + str(moonbasket_coins_count) + ")")
-        #    exit(1)
+        trade_success, order_id = trade(config["tpair"], initial_tpair_mprice, "buy", moonbasket_coins_count)
+        if trade_success != 1:
+            debugfile.write("Error Purchasing Moonbasket Coins (" + str(moonbasket_coins_count) + ")")
+            exit(1)
         debugfile.write("Moonbasket Volume = " + str(moonbasket_coins_count) + "\n")
         debugfile.write("Moonbasket Bought Price = " + str(initial_tpair_mprice) + "\n")
 
@@ -613,13 +607,12 @@ if matrix_established == 0:
 
     # EDEN: SET MOONBASKET GOAL SELLS (moonbasket_coins_count @ one peg above matrix top)
     # EDEN CREATE SELL moonbasket_coins_count @ moon_basket_peg
-    # Vanny 121417
     if dont_trade != 1:
-        #trade_success, order_id = trade(config["tpair"], moon_basket_peg, "sell", moonbasket_coins_count)
-        #if trade_success != 1:
-        #    debugfile.write("Error Creating Moonbasket Sale Order, Coins(" + str(moonbasket_coins_count) +
-        #                    ") Price(" + str(moon_basket_peg) + ")")
-        #    exit(1)
+        trade_success, order_id = trade(config["tpair"], moon_basket_peg, "sell", moonbasket_coins_count)
+        if trade_success != 1:
+            debugfile.write("Error Creating Moonbasket Sale Order, Coins(" + str(moonbasket_coins_count) +
+                            ") Price(" + str(moon_basket_peg) + ")")
+            exit(1)
         debugfile.write("Moonbasket Sell Price = " + str(moon_basket_peg) + '\n')
 
 
@@ -649,18 +642,16 @@ if matrix_established == 0:
     trade_volume = starting_tpair_coins / number_of_pegs
     trade_volume = round_down_tpair_volume(trade_volume, config["tpair"])
 
-    # Vanny 121417
     if (dont_trade != 1):
-        #trade_success, order_id = trade(config["tpair"], initial_tpair_mprice, "buy", above_market_coin_count)
-        #if trade_success != 1:
-        #    debugfile.write("Error Purchasing Matrix Investment Coins(" + str(above_market_coin_count) + ") Price(" +
-        #            str(initial_tpair_mprice) + ")\n" )
-        #    exit(1)
+        trade_success, order_id = trade(config["tpair"], initial_tpair_mprice, "buy", above_market_coin_count)
+        if trade_success != 1:
+            debugfile.write("Error Purchasing Matrix Investment Coins(" + str(above_market_coin_count) + ") Price(" +
+                    str(initial_tpair_mprice) + ")\n" )
+            exit(1)
         debugfile.write("Matrix Coins Purchased = " + str(above_market_coin_count) + "\n")
         debugfile.write("Matrix Coins Price Purchased = " + str(initial_tpair_mprice) + '\n')
         debugfile.write("Matrix Trade Volume = " + str(trade_volume) + "\n")
 
-    # VANNY debugging Oct 4
 
     # ***********************************************************************************************************
     # SECTION B - ACTUALLY PRODUCE OUR MATRIX AND WRITE IT TO MFILE - UNLESS IT WAS ALREADY READ IN FROM AN MFILE
@@ -728,7 +719,6 @@ if matrix_established == 0:
 
 # ----> PUT IN LOOP ---> LOOP ---> PUT IN LOOP --> PUT IN LOOP --> PUT IN LOOP --> PUT IN LOOP
 success = 1
-matrix_file_update_needed = 0
 soldup_indexes = []
 rebuy_low_pegs = []
 resell_high_pegs = []
