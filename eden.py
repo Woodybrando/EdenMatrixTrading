@@ -734,6 +734,9 @@ else:
 while (success == 1):
 
     number_of_active_orders = 0
+    if recent_trades:
+        time.sleep(3)
+        recent_trades = False
 
     # Get the new current market price
     depth = marketdepth(config["tpair"])
@@ -766,10 +769,6 @@ while (success == 1):
     # WERE THERE SELLS? (in other words market went high before going low)
     # 2A) YES : then do a) purchase low with all the coins sold and replace those sell pegs
     #            and do b) for all buys, fill in sell pegs at one price higher
-
-    if recent_trades:
-        time.sleep(20)
-        recent_trades = False
     a_orders = activeorders(config["tpair"])
     if a_orders == None:
         number_of_active_orders = 0
@@ -1039,7 +1038,7 @@ while (success == 1):
                 for index, price in enumerate(matrix):
 #                    if (price < current_tpair_mprice and index != last_matrix_gap_idx
 #                        and index < len(matrix) -1 and matrix[index+1] <= current_tpair_mprice):
-                    if price < lower_buys_threshold:
+                    if price <= lower_buys_threshold:
                         if matrix_trade_state[index] == 0 and last_matrix_trade_state[index] != 3:
                             if last_matrix_trade_state[index] != 1:
                                 debugfile.write("Program error. Market down. Coin bought(?) lower than current tpair price - Buy price " + str(price) +
@@ -1060,7 +1059,7 @@ while (success == 1):
             higher_sells_threshold = get_full_peg_higher(last_tpair_mprice, matrix)
             if higher_sells_threshold != -1:
                 for index, price in enumerate(matrix):
-                    if price > last_tpair_mprice:
+                    if price >= higher_sells_threshold:
 #                        if matrix_trade_state[index] == 0 and index != matrix_gap_idx and index != last_matrix_gap_idx:
                         if matrix_trade_state[index] == 0 and last_matrix_trade_state[index] != 3:
                             if last_matrix_trade_state[index] != 2:
@@ -1188,12 +1187,13 @@ while (success == 1):
             for idxval in soldup_indexes:
                 matrix_trade_state[idxval] = 2
 
+        # For a market at the same price as last check
         else:
 
             # Only need to handle the cases of buys really low and sells really high
             # and the cases of one up or one down
 
-            # Count to see if any units were bought even lower (by one whole peg) than new market price
+            # Count to see if any units were bought even lower (by one whole peg) than market price
             # * * * COINS BOUGHT REALLY LOW * * *
             need_to_sell_trade_volume = 0
             need_to_sell_price = 0
@@ -1202,7 +1202,7 @@ while (success == 1):
                 for index, price in enumerate(matrix):
                     #                    if (price < current_tpair_mprice and index != last_matrix_gap_idx
                     #                        and index < len(matrix) -1 and matrix[index+1] <= current_tpair_mprice):
-                    if price < lower_buys_threshold:
+                    if price <= lower_buys_threshold:
                         if matrix_trade_state[index] == 0 and last_matrix_trade_state[index] != 3:
                             if last_matrix_trade_state[index] != 1:
                                 debugfile.write(
@@ -1225,7 +1225,7 @@ while (success == 1):
             higher_sells_threshold = get_full_peg_higher(current_tpair_mprice, matrix)
             if higher_sells_threshold != -1:
                 for index, price in enumerate(matrix):
-                    if price > current_tpair_mprice:
+                    if price >= higher_sells_threshold:
                         #                        if matrix_trade_state[index] == 0 and index != matrix_gap_idx and index != last_matrix_gap_idx:
                         if matrix_trade_state[index] == 0 and last_matrix_trade_state[index] != 3:
                             if last_matrix_trade_state[index] != 2:
