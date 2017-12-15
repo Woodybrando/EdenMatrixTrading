@@ -2,9 +2,9 @@
 import json
 import math
 
-def read_config():
+def read_config(config_fname):
     config = {}
-    with open('./Bryn_wex_ltc_usd/config_wex_ltc_usd.json') as f:
+    with open(config_fname) as f:
         config = json.load(f)
     for k, v in config.iteritems():
         print '%s: %s' % (k, v)
@@ -20,8 +20,14 @@ def round_tpair_price(number, tpair):
         return_number = round(number, 3)
     elif tpair == "eth_btc":
         return_number = round(number, 5)
+    elif tpair == "ltc_btc":
+        return_number = round(number, 5)
     elif tpair == "btc_usd":
         return_number = round(number, 6)
+    elif tpair == "dsh_eth":
+        return_number = round(number, 3)
+    elif tpair == "dsh_ltc":
+        return_number = round(number, 3)
     else:
         print "ERROR!! Haven't defined round price function for tpair " + tpair
         exit(1)
@@ -38,7 +44,12 @@ def round_tpair_volume(number, tpair):
         return_number = round(number, 4)
     elif tpair == "eth_btc":
         return_number = round(number, 4)
-
+    elif tpair == "ltc_btc":
+        return_number = round(number, 7)
+    elif tpair == "dsh_eth":
+        return_number = round(number, 3)
+    elif tpair == "dsh_ltc":
+        return_number = round(number, 6)
     # Could do more than 5 digits for BTC but let's keep at 4 for keeping it simple
     elif tpair == "btc_usd":
         return_number = round(number, 4)
@@ -57,6 +68,12 @@ def round_down_tpair_volume(number, tpair):
         return_number = math.floor(10000*round(number, 4))/10000
     elif tpair == "eth_btc":
         return_number = math.floor(10000*round(number, 4))/10000
+    elif tpair == "ltc_btc":
+        return_number = math.floor(10000000*round(number, 7))/10000000
+    elif tpair == "dsh_eth":
+        return_number = math.floor(1000*round(number, 3))/1000
+    elif tpair == "dsh_ltc":
+        return_number = math.floor(1000000*round(number, 6))/1000000
 
     # Could do more than 5 digits for BTC but let's keep at 4 for keeping it simple
     elif tpair == "btc_usd":
@@ -72,6 +89,12 @@ def get_kill_order_price(tpair):
         kill_price = ".001"
     elif tpair == "ppc_usd":
         kill_price = ".01"
+    elif tpair == "ltc_usd":
+        kill_price = ".01"
+    elif tpair == "dsh_eth":
+        kill_price = ".1"
+    elif tpair == "dsh_ltc":
+        kill_price = ".1"
     else:
         print "ERROR, Haven't defined Kill Order Price for tpair " + str(tpair) + "\n"
         exit(1)
