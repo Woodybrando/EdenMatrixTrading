@@ -36,23 +36,17 @@ class CoinbaseExchangeAuth(AuthBase):
         return request
 
 
-
 f = open( "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/config_GDAX_DONT_UPLOAD.json" , "rb" )
 GDAX_config = json.load(f)
 f.close()
 
-
-api_url = 'https://api.gdax.com'
 #api_url = 'https://api-public.sandbox.gdax.com'
-
-
+api_url = 'https://api.gdax.com'
 GDAX_phrase = GDAX_config["GDAX_PASSPHRASE"]
 GDAX_key = GDAX_config["GDAX_API_KEY"]
 GDAX_secret = GDAX_config["GDAX_API_SECRET"]
 
-
 auth = CoinbaseExchangeAuth( GDAX_key, GDAX_secret, GDAX_phrase)
-
 
 order = {}
 matrix_dict = {}
@@ -61,25 +55,17 @@ retrace_dict = {}
 pillars_retrace_dict = {}
 loopit = True
 
-#run_once = 0
-
-LTC_USD = 'LTC-USD'
-
-
-
-LTC_BTC = 'LTC-BTC'
-
-BTC_USD = 'BTC-USD'
-
-
-a = LTC_USD
+a = 'LTC-USD'
 A = a
 
-b = LTC_BTC
+b = 'LTC-BTC'
 B = b
 
-c = BTC_USD
+c = 'BTC-USD'
 C = c
+
+i = 0
+I = i
 
 x = 0
 X = x
@@ -93,13 +79,11 @@ N = n
 m = 1
 M = m
 
-
 s = 2
 S = s
 
 e = 3
 E = e
-
 
 doWhat = input("Do you want to m. build a matrix file s. buy and set up your matrix or e. activate the rebuy engine? \n"
                "type m or s or e?")
@@ -145,10 +129,9 @@ if doWhat == m:
         marketBTC = requests.get(api_url + '/products/BTC-USD/ticker')
 
         print(str(marketPr))
+        #print(marketPr.status_code)
 
         time.sleep(1)
-
-        print(marketPr.status_code)
 
         if marketPr.status_code != 200:
             reconCount = 0
@@ -271,7 +254,7 @@ if doWhat == m:
 
     belowVal = round(unroundVal, 4)
 
-    coinBelow = marketLTC/belowVal
+    coinBelow = belowVal/marketLTC
 
     matrix_dict['Below Peg Value'] = belowVal
     matrix_dict['Coin Below'] = coinBelow
@@ -331,7 +314,7 @@ if doWhat == m:
     lowerMatrix = []
     countOrder = {}
 
-    resolution  = resolutionAbove + resolutionBelow + 1
+    resolution  = resolutionAbove + resolutionBelow
 
     matrix_dict['Total Resolution'] = resolution
 
@@ -353,7 +336,21 @@ if doWhat == m:
     print("Current Market Price: " + str(marketPr))
 
     counter = 0
+    conStat = 0
     peg = marketP
+
+    if marketPair == b:
+        conStat = input("Do you want the volume to be the same or"
+                        "to increase as the price goes away from the original market price?"
+                        "s for same or i for increase? s or i?")
+        if conStat == s:
+            setStat = input("Set volume or have it set automatically?"
+                            "s or a")
+            if setStat == s:
+                volume = input("What volume do you want to set?")
+            if setStat == a:
+                volumeBTC = belowBuys / marketBTC
+                volume = volumeBTC / resolution
 
     while counter < count:
 
@@ -405,13 +402,21 @@ if doWhat == m:
 
         elif counter < mNumber:
             peg = pegMakerL - lowerSpread
-            volume = peg / belowVal
+
 
             if marketPair == b:
-                nonFiatVal = lowerPegValue / marketBTC
-                volume = nonFiatVal/peg
+                if conStat == i:
+                    print("LowerPegValue is:")
+                    print(lowerPegValue)
+                    nonFiatVal = lowerPegValue / marketBTC
+                    print("NonFiatVal is:")
+                    print(nonFiatVal)
+                    volume = nonFiatVal/peg
+                    print("Volume for b is:")
+                    print(volume)
 
             if marketPair != b:
+                volume = belowVal / peg
 
                 rPeg = round(peg, marketDec)
 
@@ -444,9 +449,6 @@ if doWhat == m:
             pegMakerL = pegMakerL - lowerSpread
             lowerCounter = lowerCounter - 1
 
-
-
-
         counter = counter + 1
 
     matrix.sort(key=lambda x: x[1])
@@ -463,7 +465,7 @@ if doWhat == m:
             retrace_dict[str(line6[1]) + ' sell'] = matrix[(line6[0] - 1)][1]
             print("Market hit your matrix top")
             print(line6)
-            print("Matrix Resolution is " + str(resolution))
+            print("Matrix Resolution is " + str(resolution + 1))
 
         else:
             print("This is the matrix peg price: " + str(line6[1]))
@@ -476,13 +478,16 @@ if doWhat == m:
     saveMatrix = input("Do you want to save the matrices to a local files? y or n")
     if saveMatrix == y:
 
-        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.pickle', 'wb') as handle:
+        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX-' + marketPair + '.pickle', 'wb')\
+                as handle:
             pickle.dump(matrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/upperMatrixGDAX.pickle', 'wb') as handle:
+        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/upperMatrixGDAX-' + marketPair + '.pickle', 'wb')\
+                as handle:
             pickle.dump(upperMatrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/lowerMatrixGDAX.pickle', 'wb') as handle:
+        with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/lowerMatrixGDAX-' + marketPair + '.pickle', 'wb')\
+                as handle:
             pickle.dump(lowerMatrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     print(len(matrix))
@@ -528,7 +533,7 @@ if doWhat == m:
         #Add an account check here to make sure there is enough
 
         investmentFactorP = input(
-            "How do u want to divide you pillar buy above/below? .5 is 50/50, .2 is .2 above .8 below?")
+            "How do u want to divide your pillar buy above/below? .5 is 50/50, .2 is .2 above .8 below?")
 
         aboveInvP = pillarBuy * investmentFactorP
 
@@ -611,17 +616,20 @@ if doWhat == m:
         countP = resolutionAboveP + resolutionBelowP + 1
         pillarMakerU = marketP
         pillarMakerL = marketP
+        lNumberP = resolutionBelow
         mNumberP = resolutionBelowP + 1
+        uNumberP = mNumberP
+        pillarCount = 0
 
         print("Count is " + str(countP))
 
         print("Current Market Price: " + str(marketP))
 
-        while countP >= 0:
-
-            pegP = pillarMakerU + upperSpreadP
+        while pillarCount < countP:
 
             if countP > mNumberP:
+
+                pegP = pillarMakerU + upperSpreadP
 
                 volumeP = aboveVolP
 
@@ -629,24 +637,26 @@ if doWhat == m:
 
                 strPegP = str(rPegP)
 
-                pegDollarP, pCodeP = strPegP.split('.')
+                if marketPair != b:
 
-                iDollarP = int(pegDollarP)
+                    pegDollarP, pCodeP = strPegP.split('.')
 
-                iCodeP = int(pCodeP)
+                    iDollarP = int(pegDollarP)
 
-                if iCodeP < 35:
-                    rPeggleP = .98
-                    iDollarP = iDollarP - 1
-                    rPegP = iDollarP + rPeggleP
+                    iCodeP = int(pCodeP)
 
-                elif iCodeP > 88:
-                    rPeggleP = .98
-                    rPegP = iDollarP + rPeggleP
+                    if iCodeP < 35:
+                        rPeggleP = .98
+                        iDollarP = iDollarP - 1
+                        rPegP = iDollarP + rPeggleP
 
-                if iCodeP >= 35 <= 87:
-                    rPeggleP = .48
-                    rPegP = iDollarP + rPeggleP
+                    elif iCodeP > 88:
+                        rPeggleP = .98
+                        rPegP = iDollarP + rPeggleP
+
+                    if iCodeP >= 35 <= 87:
+                        rPeggleP = .48
+                        rPegP = iDollarP + rPeggleP
 
                 listP = uNumberP, rPegP, round(volumeP, 4)
                 pillars.append(listP)
@@ -722,7 +732,7 @@ if doWhat == m:
                     pillarMakerL = pillarMakerL - lowerSpreadP
                     lNumberP = lNumberP - 1
 
-            countP = countP - 1
+            pillarCount = pillarCount + 1
             print("Count is " + str(countP))
 
         pillars.sort(key=lambda x: x[1])
@@ -746,7 +756,7 @@ if doWhat == m:
         print(pillars)
 
         json.dump(pillars_retrace_dict, open(
-            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillars_retraceDict.txt", 'w'))
+            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillars_retraceDict-" + marketPair + ".txt", 'w'))
 
     y = 0
     Y = y
@@ -759,49 +769,64 @@ if doWhat == m:
     if saveVars == y:
 
         json.dump(matrix_dict, open(
-            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/GDAX_matrix_variable_save.txt", 'w'))
+            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/GDAX_matrix_variable_save-" + marketPair + ".txt", 'w'))
         json.dump(retrace_dict, open(
-            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict.txt", 'w'))
+            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict-" + marketPair + ".txt", 'w'))
         json.dump(pillar_dict, open(
-            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillarDict.txt", 'w'))
+            "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/pillarDict-" + marketPair + ".txt", 'w'))
 
-    exitAns = input("Do you want to exit or set up a matrix? y or s?")
+    doWhat = input("Do you want to exit or set up a matrix? y or s?")
 
-    if exitAns == y:
+    if doWhat == y:
         exit()
 
-    else:
+if doWhat == s:
 
-        doWhat = s
+    a = 'LTC-USD'
+    b = 'LTC-BTC'
+    c = 'BTC-USD'
 
-elif doWhat == s:
+    whichMatrix = input('Which of ur matrix files do u want to build from?'
+                        'a. LTC-USD b. LTC-BTC c. BTC-USD')
 
-    matrixVs = json.load(open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/GDAX_matrix_variable_save.txt"))
+    if whichMatrix == a:
+        marketDec = 2
+    if whichMatrix == b:
+        marketDec = 5
+    if whichMatrix == c:
+        marketDec = 2
+
+    matrixVs = json.load(
+        open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/"
+             "GDAX_matrix_variable_save-" + whichMatrix + ".txt"))
 
     print("Archived Market Price Saved Matrices were built on: " + str(matrixVs['Market Price']))
 
-    marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
+    marketPr = requests.get(api_url + '/products/' + whichMatrix + '/ticker')
     jsonPrice = marketPr.json()
     marketPr = float(jsonPrice['ask'])
-    marketCurrent = round(marketPr, 2)
+    marketCurrent = round(marketPr, marketDec)
 
     print("Current Market Price: " + str(marketCurrent))
 
     print("Total Resolution: " + str(matrixVs['Total Resolution']))
 
-    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX.pickle', 'rb') as handle:
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/matrixGDAX-' + whichMatrix + '.pickle', 'rb')\
+            as handle:
         matrixRead = pickle.load(handle)
 
     print("This is the matrix:")
     print(matrixRead)
 
-    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/upperMatrixGDAX.pickle', 'rb') as handle:
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/upperMatrixGDAX-' + whichMatrix + '.pickle', 'rb')\
+            as handle:
         upperMatrixRead = pickle.load(handle)
 
     print("This is the upper matrix:")
     print(upperMatrixRead)
 
-    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/lowerMatrixGDAX.pickle', 'rb') as handle:
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/lowerMatrixGDAX-' + whichMatrix + '.pickle', 'rb')\
+            as handle:
         lowerMatrixRead = pickle.load(handle)
 
     print("This is the lower matrix:")
@@ -885,7 +910,12 @@ elif doWhat == s:
             u = requests.post(api_url + '/orders', json=lowerPegOrder, auth=auth)
             print(u.json())
 
-elif doWhat == e:
+    doWhat = input("Do you want to exit or run the re-buy engine? y or e?")
+
+    if doWhat == y:
+        exit()
+
+if doWhat == e:
 
     from pprint import pprint
 
