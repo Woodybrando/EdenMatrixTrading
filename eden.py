@@ -218,7 +218,9 @@ def write_matrix_file(mfile):
 
     mfile.write("INITIAL_MARKET_PRICE=" + str(initial_tpair_mprice) + "\n")
     mfile.write("MARKET_PRICE=" + str(mprice) + "\n")
+    mfile.write("MOON_BASKET_COIN_COUNT=" + str(moonbasket_coins_count) + "\n")
     mfile.write("MOON_BASKET_PRICE=" + str(moon_basket_peg) + "\n")
+    mfile.write("ABOVE_MARKET_COIN_COUNT=" + str(above_market_coin_count) + "\n")
     mfile.write("TRADE_VOLUME=" + str(trade_volume) + "\n")
     mfile.write("MATRIX=" + "\n")
 
@@ -226,6 +228,7 @@ def write_matrix_file(mfile):
             mfile.write("[" + str(index) + "],[" + str(peg) + "],["
             + str(matrix_trade_state[index])
            + "],[" + str(matrix_order_id[index]) + "]\n")
+
 
 
 
@@ -257,6 +260,81 @@ def backup_matrix_file():
 
     new_fname = str(config["matrix_dir"]) + "/Matrix_" + str(config['tpair']) +"_backup.txt"
     shutil.copy(config['matrix_fname'], new_fname)
+
+def get_response_from_input():
+    Y = 1
+    N = 2
+    Q = 3
+    y = Y
+    n = N
+    q = Q
+    response_input = input("Y or N :")
+    if response_input == Y:
+        return True
+    elif response_input == N:
+        return False
+    elif response_input == Q:
+        print "Quitting program."
+        exit(0)
+    else:
+        print "Unrecognized response. Exiting program\n"
+        exit(14)
+
+def get_mode_from_input():
+    D = 1
+    T = 2
+    Q = 3
+    d = D
+    t = T
+    q = Q
+    trade_mode_input = input("T or D :")
+    if trade_mode_input == T:
+        mode = TRADE
+        debugfile.write("Trade Mode is On. Conducting all trades to respond to market. \n")
+    elif trade_mode_input == D:
+        debugfile.write("Data Generation Mode is On. No trades will auto run.\nCreating Matrix File if one doesn't exist and printing trades that will respond to Market. \n")
+        mode = DATA
+    elif trade_mode_input == Q:
+        print "Quitting program."
+        exit(0)
+    else:
+        print "Unrecognized response. Exiting program\n"
+        exit(14)
+    return mode
+
+def get_perform_orders_from_input():
+ # Query User Do they want to Perform the Initial investment purchase & set up matrix?
+        # Do they just want to turn on Retrace Engine?
+        # Or both?
+        I = 1
+        R = 2
+        B = 3
+        i = I
+        r = R
+        b = B
+
+        print "Matrix values are known. Preparing to Trade. Do you want to set up Initial Matrix (I)\n, Initiate Matrix Retrace Trading (R)\n, or" \
+              "do Both (B) ?\n"
+        type_of_trades_to_set_input = input("I or R or B :")
+        if type_of_trades_to_set_input == I:
+            perform_initial_market_setup = True
+            perform_retrace_engine = False
+
+            debugfile.write("Purchasing Moonbasket and Initial Investments and setting Moonbasket Sell and setting Matrix Trade Orders in Market. No retrace strategy running. \n")
+        elif type_of_trades_to_set_input == R:
+            perform_initial_market_setup = False
+            perform_retrace_engine = True
+
+            debugfile.write(" Turning on Eden engine to perform active trade retraces. \n")
+        elif type_of_trades_to_set_input == B:
+            perform_initial_market_setup = True
+            perform_retrace_engine = True
+
+        else:
+            print "Unrecognized response. Exiting program\n"
+            exit(14)
+
+        return perform_initial_market_setup, perform_retrace_engine
 
 
 # *******************************************************************************************************
@@ -292,7 +370,10 @@ key = ""
 secret = ""
 last_matrix_gap_idx = -1
 recent_trades = False
-perform_retrace_trade_orders = 1
+DATA = 0
+TRADE = 1
+PERFORM_INITIAL_MARKET_SETUP = False
+PERFORM_RETRACE_ENGINE = False
 config_filename = ""
 
 ####################################################################################
@@ -309,27 +390,8 @@ temp_debug_filename = str(config["matrix_dir"]) + "/debug_" + str(config["trade_
 debugfile = open(temp_debug_filename, 'w+')
 
 
-#print "Do you want to run in Trade mode (conduct all trades) or generate Data Only mode? (Generate Matrix & Data)"
-D = 1
-T = 2
-Q = 3
-d = D
-t = T
-q = Q
-dont_trade_input = input("T or D :")
-if dont_trade_input == T:
-    dont_trade = 0
-    debugfile.write("Trade Mode is On. Conducting all trades to respond to market. \n")
-elif dont_trade_input == D:
-    debugfile.write("Data Generation Mode is On. No trades will auto run.\nCreating Matrix File if one doesn't exist and printing trades that will respond to Market. \n")
-    dont_trade = 1
-elif dont_trade_input == Q:
-    print "Quitting program."
-    exit(0)
-else:
-    print "Unrecognized response. Exiting program\n"
-    exit(14)
-
+#print "Do you want to run in TRADE mode (conduct all trades) or DATA Only mode? (Generate Matrix & Data)"
+mode = get_mode_from_input()
 
 # Read in financial info to log in
 info_filename = input("Please provide account info filename:")
@@ -349,6 +411,8 @@ info_file.close()
 
 ############ END OF GUI STUFF
 
+tpair_numerator = str(config["tpair"]).split("_")[0]
+tpair_denomenator = str(config["tpair"]).split("_")[1]
 
 # Check to see if we are reading in an already created Matrix from Matrix file or if making a new one
 # If a Matrix.txt with valid data exists, then we already have a Matrix on the market.
@@ -411,7 +475,7 @@ else:
                     # Needs to be fixed
                     initial_tpair_mprice = round_tpair_price(float(mfile_line.split("=")[1]), config["tpair"])
                 else:
-                    debugfile.write("Error reading Matrix File\n")
+                    debugfile.write("Error reading Matrix File line " + str(linenum) + "\n")
                     exit(1)
             elif linenum == 1:
                 if mfile_line.find("MARKET_PRICE") != -1:
@@ -419,21 +483,32 @@ else:
                     last_tpair_mprice = round_tpair_price(float(mfile_line.split("=")[1]), config["tpair"])
 #                    debugfile.write("PREVIOUS MARKET PRICE = " + last_tpair_mprice + "\n")
                 else:
-                    debugfile.write("Error reading Matrix File\n")
+                    debugfile.write("Error reading Matrix File line " + str(linenum) + "\n")
                     exit(1)
             elif linenum == 2:
+                if mfile_line.find("MOON_BASKET_COIN_COUNT") != -1:
+                    moonbasket_coins_count = round_tpair_volume(float(mfile_line.split("=")[1]), config["tpair"])
+                else:
+                    debugfile.write("Error reading Matrix File line " + str(linenum) + "\n")
+                    exit(1)
+            elif linenum == 3:
                 if mfile_line.find("MOON_BASKET_PRICE") != -1:
                     moon_basket_peg = round_tpair_price(float(mfile_line.split("=")[1]), config["tpair"])
                 else:
-                    debugfile.write("Error reading Matrix File\n")
+                    debugfile.write("Error reading Matrix File line " + str(linenum) + "\n")
                     exit(1)
-            elif linenum == 3:
+            elif linenum == 4:
+                if mfile_line.find("ABOVE_MARKET_COIN_COUNT") != -1:
+                    above_market_coin_count = round_tpair_volume(float(mfile_line.split("=")[1]), config["tpair"])
+                else:
+                    debugfile.write("Error reading Matrix File line " + str(linenum) + "\n")
+                    exit(1)
+            elif linenum == 5:
                 if mfile_line.find("TRADE_VOLUME") != -1:
                     trade_volume = round_tpair_volume(float(mfile_line.split("=")[1]), config["tpair"])
                 else:
-                    debugfile.write("Error reading Matrix File\n")
+                    debugfile.write("Error reading Matrix File line " + str(linenum) + "\n")
                     exit(1)
-
             linenum += 1
             matrix_established = 1
 
@@ -445,83 +520,58 @@ else:
 # End of code to read in Matrix.txt file
 
 
+# ***********************************************************************************************************
+# Get Current Market Price
+# ***********************************************************************************************************
+
+if config["tpair_set_market_start_price"] != "" and float(config["tpair_set_market_start_price"]) > 0:
+    current_tpair_mprice = float(config["tpair_set_market_start_price"])
+    initial_tpair_mprice = float(config["tpair_set_market_start_price"])
+
+elif config["exchange_choice"] == "wex.nz":
+    depth = marketdepth(config["tpair"])
+    if depth is None:
+        print "Error connecting to wex.nz"
+        exit(1)
+
+    # Debug make sure these asks look appropriate
+    current_tpair_mprice = depth[0][1][0]
+    initial_tpair_mprice = depth[0][1][0]
+
+# Need to query market and put this in
+elif config["exchange_choice"] == "gdax.com":
+    print "Eden_WEX is not currently implemented for gdax market"
+    exit(1)
+else:
+    debugfile.write("We don't have software created for markets other than wex.nz and gdax.com yet. Stay tuned!\n")
+    exit(1)
+
+# Open the Matrix.txt file
+error_to_catch = getattr(__builtins__, 'FileNotFoundError', IOError)
+try:
+    # Does the matrix.txt file exist with valid data
+    mfile = open(str(config["matrix_fname"]), 'w')
+
+except error_to_catch:
+    debugfile.write(str(config["matrix_fname"]) + " can not be opened")
+    exit(1)
+
+
+# Generate the matrix of pegs (and the corresponding trading state matrix)
+# ------------------------------------------------ WORK TO BE DONE HERE -----------------------------------------
+# For the moment the bottom and top are defined with hard limits but this will change to be related to the current
+# market price, so the matrix_bottom and matrix_top will be taken out of config file then and calculated here
+# ------------------------------------------------ WORK TO BE DONE HERE -----------------------------------------
+
 if matrix_established == 0:
 
-    Y = 1
-    N = 2
-    y = Y
-    n = N
-    if (dont_trade == 0):
-        print "No matrix established. Eden will generate matrix file and establish positions in the market. Do you want to Proceed?"
-        user_input = input("Y or N:")
-        if user_input == N or user_input == n:
-            print "Program Quitting"
-            exit(10)
-        elif user_input == Y or user_input == y:
-            print "Proceeding... \n"
-        else:
-            print "Invalid response. Program Quitting"
-            exit(11)
-
-    else:
-        print "No matrix established. Program is in Dont Trade Mode. Eden will generate matrix file only."
-
-    # ***********************************************************************************************************
-    # Get Current Market Price
-    # ***********************************************************************************************************
-
-    if config["tpair_set_market_start_price"] != "" and float(config["tpair_set_market_start_price"]) > 0:
-        current_tpair_mprice = float(config["tpair_set_market_start_price"])
-        initial_tpair_mprice = float(config["tpair_set_market_start_price"])
-
-    elif config["exchange_choice"] == "wex.nz":
-        depth = marketdepth(config["tpair"])
-        if depth is None:
-            print "Error connecting to wex.nz"
-            exit(1)
-
-        # Debug make sure these asks look appropriate
-        current_tpair_mprice = depth[0][1][0]
-        initial_tpair_mprice = depth[0][1][0]
-
-    # Need to query market and put this in
-    elif config["exchange_choice"] == "gdax.com":
-        print "Eden_WEX is not currently implemented for gdax market"
-        exit(1)
-    else:
-        debugfile.write("We don't have software created for markets other than wex.nz and gdax.com yet. Stay tuned!\n")
-        exit(1)
-
-    # Open the Matrix.txt file
-    error_to_catch = getattr(__builtins__, 'FileNotFoundError', IOError)
-    try:
-        # Does the matrix.txt file exist with valid data
-        mfile = open(str(config["matrix_fname"]), 'w')
-
-    except error_to_catch:
-        debugfile.write(str(config["matrix_fname"]) + " can not be opened")
-        exit(1)
-
-    # Generate the matrix of pegs (and the corresponding trading state matrix)
-    # ------------------------------------------------ WORK TO BE DONE HERE -----------------------------------------
-    # For the moment the bottom and top are defined with hard limits but this will change to be related to the current
-    # market price, so the matrix_bottom and matrix_top will be taken out of config file then and calculated here
-    # ------------------------------------------------ WORK TO BE DONE HERE -----------------------------------------
+    # WHAT AMOUNT OF FIAT ($, EURO, YUAN, YEN) ARE YOU OKAY WITH GIVING UP FOREVER
+    # TO LEARN FROM THIS EXPERIENCE? What is initial investment amount?
     matrix_bottom = config["matrix_bottom_ratio"] * initial_tpair_mprice
     matrix_bottom = round_tpair_price(matrix_bottom, config["tpair"])
     matrix_top = config["matrix_top_ratio"] * initial_tpair_mprice
     matrix_top = round_tpair_price(matrix_top, config["tpair"])
 
-
-    # "Matrix" will hold the pegs
-    # "Matrix_Trade_State" will hold the order states (0=no order, too near market 1="buy" 2="sell"
-    # "Matrix_Order_Id" will hold the OrderId associated with each peg
-    matrix, matrix_trade_state, matrix_order_id = generate_matrix(matrix_bottom, matrix_top,
-                                                              config["matrix_spread_percent"], config["tpair"])
-
-
-    # WHAT AMOUNT OF FIAT ($, EURO, YUAN, YEN) ARE YOU OKAY WITH GIVING UP FOREVER
-    # TO LEARN FROM THIS EXPERIENCE? What is initial investment amount?
 
     # EDEN STORE VALUE: (USER INITIAL INVESTMENT)
     # EDEN open file to record initial purchases and Matrix information
@@ -550,75 +600,23 @@ if matrix_established == 0:
     # Set the price of the Moonbasket Sell to one peg above the matrix
     moon_basket_peg = round_tpair_price((matrix_top * config["matrix_spread_percent"]), config["tpair"])
 
-
-
-    # your matrix won, now what do you want to do with your money
-
     # EDEN: (initial_tpair_mprice)/(moon_basket_current_market_buy_amount) = (moonbasket_coins_count) 20
     moonbasket_coins_count = moon_basket_current_market_buy_amount / initial_tpair_mprice
     moonbasket_coins_count = round_tpair_volume(moonbasket_coins_count, config["tpair"])
 
-    # if not in data only mode, see if we should do init investment and/or do retraces?
-    if dont_trade == 0:
-        # Query User Do they want to Perform the Initial investment purchase & set up matrix?
-        # Do they just want to turn on Retrace Engine?
-        # Or both?
-        I = 1
-        R = 2
-        B = 3
-        i = I
-        r = R
-        b = B
 
-        print "Matrix values are known. Preparing to Trade. Do you want to set up Initial Matrix (I), Initiate Matrix Retrace Trading (R), or" \
-              "do Both (B) ?\n"
-        type_of_trades_to_set_input = input("I or R or B :")
-        if type_of_trades_to_set_input == I:
-            perform_initial_trade_orders = 1
-            perform_retrace_trade_orders = 0
-            debugfile.write("Purchasing Moonbasket and Initial Investments and setting Moonbasket Sell and setting Matrix Trade Orders in Market. No retrace strategy running. \n")
-        elif type_of_trades_to_set_input == R:
-            perform_retrace_trade_orders = 1
-            perform_initial_trade_orders = 0
-            debugfile.write(" Turning on Eden engine to perform active trade retraces. \n")
-        elif dont_trade_input == B:
-            perform_retrace_trade_orders = 1
-            perform_initial_trade_orders = 1
-        else:
-            print "Unrecognized response. Exiting program\n"
-            exit(14)
+    # "Matrix" will hold the pegs
+    # "Matrix_Trade_State" will hold the order states (0=no order, too near market 1="buy" 2="sell"
+    # "Matrix_Order_Id" will hold the OrderId associated with each peg
+    matrix, matrix_trade_state, matrix_order_id = generate_matrix(matrix_bottom, matrix_top,
+                                                              config["matrix_spread_percent"], config["tpair"])
 
-    # EDEN: BUY (moonbasket_coins_count) @ (initial_tpair_mprice)
-    # EDEN: AND CONFIRM TRANSACTION
-    if dont_trade != 1:
-        trade_success, order_id = trade(config["tpair"], initial_tpair_mprice, "buy", moonbasket_coins_count)
-        if trade_success != 1:
-            debugfile.write("Error Purchasing Moonbasket Coins (" + str(moonbasket_coins_count) + ")")
-            exit(1)
-        debugfile.write("Moonbasket Volume = " + str(moonbasket_coins_count) + "\n")
-        debugfile.write("Moonbasket Bought Price = " + str(initial_tpair_mprice) + "\n")
+    # NOTE : WE ARE WORKING WITH A STATIC TRADE VOLUME HERE. IF THAT CHANGES LOOK FOR ALL INSTANCES OF TRADE_VOLUME IN
+    # CODE AND ADJUST ACCORDINGLY
+    starting_tpair_coins = matrix_investment / initial_tpair_mprice
+    trade_volume = starting_tpair_coins / number_of_pegs
+    trade_volume = round_down_tpair_volume(trade_volume, config["tpair"])
 
-    # Subtract the trade Fee paid on teh Moonbasket Purchase
-    moonbasket_coins_count = (moon_basket_current_market_buy_amount - moon_basket_trade_fee) / initial_tpair_mprice
-    moonbasket_coins_count = round_down_tpair_volume(moonbasket_coins_count, config["tpair"])
-    debugfile.write("Moonbasket Coin Count: " + str(moonbasket_coins_count) + "\n")
-
-
-
-    # EDEN: SET MOONBASKET GOAL SELLS (moonbasket_coins_count @ one peg above matrix top)
-    # EDEN CREATE SELL moonbasket_coins_count @ moon_basket_peg
-    if dont_trade != 1:
-        trade_success, order_id = trade(config["tpair"], moon_basket_peg, "sell", moonbasket_coins_count)
-        if trade_success != 1:
-            debugfile.write("Error Creating Moonbasket Sale Order, Coins(" + str(moonbasket_coins_count) +
-                            ") Price(" + str(moon_basket_peg) + ")")
-            exit(1)
-        debugfile.write("Moonbasket Sell Price = " + str(moon_basket_peg) + '\n')
-
-
-    #############################################################################################################
-    # Buy Initial Matrix Investment
-    ############################################################################################################
     # EDEN: WHAT RATIO OF MATRIX WOULD YOU LIKE TO CHOOSE 60/40 65/35?
     # EDEN: EXPLANATION OF BENEFIT OR MARKET CONDITIONS EACH APPROPIATE FOR
     matrix_investment = initial_investment - moon_basket_current_market_buy_amount
@@ -632,42 +630,112 @@ if matrix_established == 0:
     above_market_buy = matrix_investment * .5
     above_market_coin_count = round_tpair_volume(above_market_buy / initial_tpair_mprice, config["tpair"])
     number_of_pegs = len(matrix)
-
     debugfile.write("Above Market Coins Count (to sell): " + str(above_market_coin_count) + "\n")
 
+    write_matrix_file(mfile)
 
-    # NOTE : WE ARE WORKING WITH A STATIC TRADE VOLUME HERE. IF THAT CHANGES LOOK FOR ALL INSTANCES OF TRADE_VOLUME IN
-    # CODE AND ADJUST ACCORDINGLY
-    starting_tpair_coins = matrix_investment / initial_tpair_mprice
-    trade_volume = starting_tpair_coins / number_of_pegs
-    trade_volume = round_down_tpair_volume(trade_volume, config["tpair"])
-
-    if (dont_trade != 1):
-        trade_success, order_id = trade(config["tpair"], initial_tpair_mprice, "buy", above_market_coin_count)
-        if trade_success != 1:
-            debugfile.write("Error Purchasing Matrix Investment Coins(" + str(above_market_coin_count) + ") Price(" +
-                    str(initial_tpair_mprice) + ")\n" )
-            exit(1)
-        debugfile.write("Matrix Coins Purchased = " + str(above_market_coin_count) + "\n")
-        debugfile.write("Matrix Coins Price Purchased = " + str(initial_tpair_mprice) + '\n')
-        debugfile.write("Matrix Trade Volume = " + str(trade_volume) + "\n")
+## End of if matrix_established == 0
 
 
-    # ***********************************************************************************************************
-    # SECTION B - ACTUALLY PRODUCE OUR MATRIX AND WRITE IT TO MFILE - UNLESS IT WAS ALREADY READ IN FROM AN MFILE
-    # ***********************************************************************************************************
 
-    # For each peg ask is this peg less than the market price we paid by an amount > the spread of 1.9% (rounded up)
-    # if so then place a buy at our static volume and
-    # store the value 1 in our matrix_trade_state
-    # if peg value is greater than market price we paid by 1.9%
-    # set a sell at our static volume till one below our top peg and
-    # store the value 2 in our matrix_peg_state
-    # also for peg <= spread below market
-    # set matrix_trade_state associated to that peg index to 0
-    # also store each trade id in matrix_trade_id in index equal to peg index #
-    list_counter = 0
-    order_id = 99
+# if not in data only mode, see if we should do init investment and/or do retraces?
+# also check if there are any orders already set in the market
+if mode == TRADE:
+
+    PERFORM_INITIAL_MARKET_SETUP, PERFORM_RETRACE_ENGINE = get_perform_orders_from_input()
+
+    starting_orders = activeorders(config["tpair"])
+    if starting_orders == None:
+        number_of_starting_orders = 0
+    else:
+        number_of_starting_orders = len(starting_orders)
+
+if PERFORM_INITIAL_MARKET_SETUP == True:
+
+    if (number_of_starting_orders != 0):
+        print("Are you sure you want to proceed even though there are " + str(number_of_starting_orders) + " already set in this market?\n")
+        resp = get_response_from_input()
+        if resp == False:
+            PERFORM_INITIAL_MARKET_SETUP = False
+
+
+# EDEN: BUY (moonbasket_coins_count) @ (initial_tpair_mprice)
+# EDEN: AND CONFIRM TRANSACTION
+if mode == TRADE:
+    if PERFORM_INITIAL_MARKET_SETUP == True:
+        print "Do you want to purchase the " + str(moonbasket_coins_count) + tpair_numerator + " coins for the Moonbasket?\n"
+        if get_response_from_input() == True:
+            debugfile.write("Purchasing Moonbasket....\n")
+            trade_success, order_id = trade(config["tpair"], initial_tpair_mprice, "buy", moonbasket_coins_count)
+            if trade_success != 1:
+                debugfile.write("Error Purchasing Moonbasket Coins (" + str(moonbasket_coins_count) + ")")
+                exit(1)
+            debugfile.write("Purchasing Moonbasket Volume = " + str(moonbasket_coins_count))
+            debugfile.write("at Price = " + str(initial_tpair_mprice) + "\n")
+
+            # Subtract the trade Fee paid on teh Moonbasket Purchase
+            moonbasket_coins_count = (moon_basket_current_market_buy_amount - moon_basket_trade_fee) / initial_tpair_mprice
+            moonbasket_coins_count = round_down_tpair_volume(moonbasket_coins_count, config["tpair"])
+            debugfile.write("Trade Fee Accounted For. Purcahsed Moonbasket Coin Count: " + str(moonbasket_coins_count) + "\n")
+
+
+
+# EDEN: SET MOONBASKET GOAL SELLS (moonbasket_coins_count @ one peg above matrix top)
+# EDEN CREATE SELL moonbasket_coins_count @ moon_basket_peg
+if mode == TRADE:
+    if PERFORM_INITIAL_MARKET_SETUP == True:
+        print "Do you want to put in the Moonbasket order to sell " + str(moonbasket_coins_count) + tpair_numerator + " coins for " + str(moon_basket_peg) + tpair_denomenator + "?\n"
+        if get_response_from_input() == True:
+            debugfile.write("Creating Sell Moonbasket Sell Order")
+            trade_success, order_id = trade(config["tpair"], moon_basket_peg, "sell", moonbasket_coins_count)
+            if trade_success != 1:
+                debugfile.write("Error Creating Moonbasket Sale Order, Coins(" + str(moonbasket_coins_count) +
+                                ") Price(" + str(moon_basket_peg) + ")")
+                exit(1)
+            debugfile.write("Set order for Moonbasket at Sell Price = " + str(moon_basket_peg) + '\n')
+
+
+#############################################################################################################
+# Buy Initial Matrix Investment
+############################################################################################################
+
+if mode == TRADE:
+    if PERFORM_INITIAL_MARKET_SETUP == True:
+        print "Do you want to purchase the initial " + str(above_market_coin_count) + " coins to sell? \n(these are put in as sells above market price.) \n"
+        if get_response_from_input() == True:
+            trade_success, order_id = trade(config["tpair"], initial_tpair_mprice, "buy", above_market_coin_count)
+            if trade_success != 1:
+                debugfile.write("Error Purchasing Matrix Investment Coins(" + str(above_market_coin_count) + ") Price(" +
+                        str(initial_tpair_mprice) + ")\n" )
+                exit(1)
+            debugfile.write(str(tpair_numerator) + " Coins Purchased = " + str(above_market_coin_count) + "\n")
+            debugfile.write("at Price = " + str(initial_tpair_mprice) + tpair_denomenator + '\n')
+
+
+# ***********************************************************************************************************
+# SECTION B - ACTUALLY PRODUCE OUR MATRIX AND WRITE IT TO MFILE - UNLESS IT WAS ALREADY READ IN FROM AN MFILE
+# ***********************************************************************************************************
+
+# For each peg ask is this peg less than the market price we paid by an amount > the spread of 1.9% (rounded up)
+# if so then place a buy at our static volume and
+# store the value 1 in our matrix_trade_state
+# if peg value is greater than market price we paid by 1.9%
+# set a sell at our static volume till one below our top peg and
+# store the value 2 in our matrix_peg_state
+# also for peg <= spread below market
+# set matrix_trade_state associated to that peg index to 0
+# also store each trade id in matrix_trade_id in index equal to peg index #
+list_counter = 0
+order_id = 99
+
+
+if PERFORM_INITIAL_MARKET_SETUP == True:
+
+    debugfile.write("Setting all Buy and Sell orders for Matrix....\n")
+
+    if (number_of_starting_orders != 0):
+        debugfile.write("Program aborting before setting matrix orders because unknown orders already exist in your market. Please resolve.")
+        exit_program(1)
 
     last_matrix_gap_idx, gap_peg = find_matrix_gap_idx_and_peg(initial_tpair_mprice, matrix)
     for peg in matrix:
@@ -676,7 +744,7 @@ if matrix_established == 0:
             matrix_order_id[list_counter] = 0
 
         elif peg < initial_tpair_mprice:
-            if (dont_trade != 1):
+            if mode == TRADE:
                 trade_success, order_id = trade(config["tpair"], peg, "buy", trade_volume)
                 if trade_success != 1:
                     debugfile.write("Error Matrix Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(peg))
@@ -685,7 +753,7 @@ if matrix_established == 0:
             matrix_order_id[list_counter] = order_id
 
         elif peg > initial_tpair_mprice:
-            if (dont_trade != 1):
+            if mode == TRADE:
                 trade_success, order_id = trade(config["tpair"], peg, "sell", trade_volume)
                 if trade_success != 1:
                     debugfile.write("Error Matrix Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(peg))
@@ -698,10 +766,10 @@ if matrix_established == 0:
             exit(1)
 
         list_counter += 1
-        matrix_established = 1
-    # End of Loop to create matrix
 
-    write_matrix_file(mfile)
+
+# End of Loop to create matrix
+
 # End of code to purchase moonbasket, initial invest, and to establish the matrix on WEX
 
 # ***********************************************************************************************************
@@ -726,7 +794,7 @@ last_matrix_trade_state = []
 depth_call_failed = 0
 
 # This turns off the Program to update orders!! Debug Success=0, Run Mode success = 1
-if (dont_trade == 1 or perform_retrace_trade_orders == 0):
+if (mode == DATA or PERFORM_RETRACE_ENGINE == False):
     success = 0
 else:
     success = 1
@@ -1003,17 +1071,22 @@ while (success == 1):
                         exit_program(1)
 
                     if matrix_trade_state[index+1] == 0:
-                        trade_success, order_id = trade(config["tpair"], price, "buy", trade_volume)
-                        if trade_success != 1:
-                            debugfile.write(
-                                "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(
-                                    price))
-                            matrix_trade_state[index] = -99
-                            matrix_order_id[index] = -99
+                        if last_matrix_trade_state[index+1] != 2:
+                            print ("WARNING: Empty Peg at price " + str(matrix[index+1]) + " but no previous sell there. Please fix manually. \n")
+                            debugfile.write("WARNING: Empty Peg at price " + str(matrix[index+1]) + " but no previous sell there. Please fix manually\n")
                             exit_program(1)
+                        else:
+                            trade_success, order_id = trade(config["tpair"], price, "buy", trade_volume)
+                            if trade_success != 1:
+                                debugfile.write(
+                                    "Error Retrace Order Type:Buy Volume:" + str(trade_volume) + " Price:" + str(
+                                        price))
+                                matrix_trade_state[index] = -99
+                                matrix_order_id[index] = -99
+                                exit_program(1)
 
-                        matrix_trade_state[index] = 1
-                        matrix_order_id[index] = order_id
+                            matrix_trade_state[index] = 1
+                            matrix_order_id[index] = order_id
 
 
         # FOR A LOW MARKET...............
@@ -1168,17 +1241,23 @@ while (success == 1):
                         exit_program(1)
 
                     elif matrix_trade_state[index-1] == 0:
-                        trade_success, order_id = trade(config["tpair"], matrix[index], "sell", trade_volume)
-                        if trade_success != 1:
-                            debugfile.write(
-                                "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(
-                                    matrix[index]))
-                            matrix_trade_state[index] = 99
-                            matrix_order_id[index] = 99
+                        if last_matrix_trade_state[index-1] != 1:
+                            print ("WARNING: Empty Peg at price " + str(matrix[index-1]) + " but no previous buy there. Not putting in sell above at price " + str(matrix[index])
+                            + ".Please fix manually. \n")
+                            debugfile.write("WARNING: Empty Peg at price " + str(matrix[index-1]) + " but not recorded as previously a sell order there. Please fix manually\n")
                             exit_program(1)
+                        else:
+                            trade_success, order_id = trade(config["tpair"], matrix[index], "sell", trade_volume)
+                            if trade_success != 1:
+                                debugfile.write(
+                                    "Error Retrace Order Type:Sell Volume:" + str(trade_volume) + " Price:" + str(
+                                        matrix[index]))
+                                matrix_trade_state[index] = 99
+                                matrix_order_id[index] = 99
+                                exit_program(1)
 
-                        matrix_order_id[index] = order_id
-                        soldup_indexes.append(index)
+                            matrix_order_id[index] = order_id
+                            soldup_indexes.append(index)
 
 
             # We couldn't reset the trade_state pegs to Sells above in order to not break looping on the
@@ -1189,6 +1268,9 @@ while (success == 1):
 
         # For a market at the same price as last check
         else:
+
+            debugfile.write("Market Constant, Current: " + str(current_tpair_mprice) + " Last: " + str(last_tpair_mprice) + "\n")
+
 
             # Only need to handle the cases of buys really low and sells really high
             # and the cases of one up or one down
@@ -1375,7 +1457,7 @@ while (success == 1):
                         exit_program(1)
 
                     matrix_order_id[bought_index + 1] = order_id
-                    matrix_trade_state[bought_index + 1] = 2
+                    matrix_trade_state[bought_index + 1] = 1
 
             elif sell_happened:
                 if matrix_trade_state[sold_index - 1] != 0:
@@ -1413,7 +1495,7 @@ while (success == 1):
 #    last_matrix_gap_idx = matrix_gap_idx
     last_tpair_mprice = current_tpair_mprice
     depth_call_failed = 0
-    time.sleep(4)
+    #time.sleep(4)
 
 # End of Action Bot Loop acting on active orders
 
