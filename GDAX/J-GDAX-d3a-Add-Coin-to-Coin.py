@@ -5,6 +5,28 @@
 # or, with easy-install:
 #
 #   easy_install requests
+#
+#
+#INDEX
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+
+
 
 import json, hmac, hashlib, time, requests, base64, pickle
 from requests.auth import AuthBase
@@ -122,6 +144,8 @@ if doWhat == m:
 
     if howPrice == x:
         marketP = input("What is the current market price?")
+        marketLTC = requests.get(api_url + '/products/LTC-USD/ticker')
+        marketBTC = requests.get(api_url + '/products/BTC-USD/ticker')
 
     elif howPrice == y:
         marketPr = requests.get(api_url + '/products/' + matrix_dict['Market Pair'] + '/ticker')
@@ -138,8 +162,7 @@ if doWhat == m:
             while reconCount < 20:
                 marketPr = requests.get(
                     api_url + '/products/' + matrix_dict['Market Pair'] + '/ticker')
-                marketLTC = requests.get(api_url + '/products/LTC-USD/ticker')
-                marketBTC = requests.get(api_url + '/products/BTC-USD/ticker')
+
                 time.sleep(2)
                 reconCount = reconCount + 1
                 print(marketPr.status_code)
@@ -147,20 +170,21 @@ if doWhat == m:
                     count = 21
 
         jsonPrice = marketPr.json()
-        jsonLTC = marketLTC.json()
-        jsonBTC = marketBTC.json()
 
         print('LTC/BTC Market Price is ' + jsonPrice['ask'])
         marketPr = float(jsonPrice['ask'])
         marketP = round(marketPr, marketDec)
 
-        print('LTC Market Price is ' + jsonLTC['ask'])
-        marketLTC = float(jsonLTC['ask'])
-        marketLTC = round(marketLTC, 2)
+    jsonLTC = marketLTC.json()
+    jsonBTC = marketBTC.json()
 
-        print('BTC Market Price is ' + jsonBTC['ask'])
-        marketBTC = float(jsonBTC['ask'])
-        marketBTC = round(marketBTC, 2)
+    print('LTC Market Price is ' + jsonLTC['ask'])
+    marketLTC = float(jsonLTC['ask'])
+    marketLTC = round(marketLTC, 2)
+
+    print('BTC Market Price is ' + jsonBTC['ask'])
+    marketBTC = float(jsonBTC['ask'])
+    marketBTC = round(marketBTC, 2)
 
     #requests.post(api_url + '/orders', json=order, auth=auth)
 
@@ -207,7 +231,7 @@ if doWhat == m:
 
     print("Upper Cost minus Fee " + str(upperBuy))
 
-    aboveCoins = aboveInv/aboveCoin
+    aboveCoins = aboveInv / marketLTC
 
     matrix_dict['Above Coins'] = aboveCoins
 
@@ -337,20 +361,18 @@ if doWhat == m:
 
     counter = 0
     conStat = 0
+    setStat = 0
     peg = marketP
 
     if marketPair == b:
-        conStat = input("Do you want the volume to be the same or"
-                        "to increase as the price goes away from the original market price?"
+        conStat = input("Do you want the volume to be the same or "
+                        "to increase as the price goes away from the original market price? \n"
                         "s for same or i for increase? s or i?")
         if conStat == s:
-            setStat = input("Set volume or have it set automatically?"
-                            "s or a")
+            setStat = input("Set volume or have it set automatically?" 
+                            "type s or a?")
             if setStat == s:
-                volume = input("What volume do you want to set?")
-            if setStat == a:
-                volumeBTC = belowBuys / marketBTC
-                volume = volumeBTC / resolution
+                setVolume = input("What volume do you want to set?")
 
     while counter < count:
 
@@ -358,7 +380,19 @@ if doWhat == m:
 
             peg = peg + upperSpread
 
-            volume = aboveVol
+            if conStat == i:
+                nonFiatVal = abovePegValue / marketBTC
+                print("NonFiatVal is:")
+                print(nonFiatVal)
+                volume = nonFiatVal / peg
+                print("Volume for b is:")
+                print(volume)
+
+            if setStat == a:
+                volume = aboveVol
+
+            if setStat == s:
+                volume = setVolume
 
             if marketPair != b:
 
@@ -394,7 +428,21 @@ if doWhat == m:
 
         elif counter == mNumber:
             peg = marketP
-            volume = aboveVol
+
+            if conStat == i:
+                volume = aboveVol
+
+            if setStat == s:
+                volume = setVolume
+
+            if setStat == a:
+                nonFiatVal = abovePegValue / marketBTC
+                print("NonFiatVal is:")
+                print(nonFiatVal)
+                volume = nonFiatVal / peg
+                print("Volume for b is:")
+                print(volume)
+
             list = counter, peg, round(volume, 4)
             matrix.append(list)
 
@@ -403,9 +451,8 @@ if doWhat == m:
         elif counter < mNumber:
             peg = pegMakerL - lowerSpread
 
-
             if marketPair == b:
-                if conStat == i:
+                if setStat == a:
                     print("LowerPegValue is:")
                     print(lowerPegValue)
                     nonFiatVal = lowerPegValue / marketBTC
@@ -414,6 +461,9 @@ if doWhat == m:
                     volume = nonFiatVal/peg
                     print("Volume for b is:")
                     print(volume)
+
+                if setStat == s:
+                    volume = setVolume
 
             if marketPair != b:
                 volume = belowVal / peg
@@ -786,6 +836,10 @@ if doWhat == s:
     b = 'LTC-BTC'
     c = 'BTC-USD'
 
+    A = a
+    B = b
+    C = c
+
     whichMatrix = input('Which of ur matrix files do u want to build from?'
                         'a. LTC-USD b. LTC-BTC c. BTC-USD')
 
@@ -917,12 +971,25 @@ if doWhat == s:
 
 if doWhat == e:
 
+    a = 'LTC-USD'
+    b = 'LTC-BTC'
+    c = 'BTC-USD'
+
+    A = a
+    B = b
+    C = c
+
+    marketPair = input("Which market do you want to run Eden in? \n"
+                        "a. LTC-USD b. LTC-BTC c. BTC-USD")
+
     from pprint import pprint
 
-    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict.txt', 'r') as f:
+    with open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/retraceDict-'
+                      + marketPair + '.txt', 'r') as f:
         matrixDict = eval(f.read())
 
-    matrixVs = json.load(open("/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/GDAX_matrix_variable_save.txt"))
+    matrixVs = json.load(open('/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/'
+                              'GDAX_matrix_variable_save-' + marketPair + '.txt'))
 
     print("Market Pair is: " + str(matrixVs['Market Pair']))
 
@@ -939,23 +1006,24 @@ if doWhat == e:
         print("Entering Prime Loop")
 
         last_fill_file_handleE = open(
-            '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt', 'r+')
+            '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed-'
+            + marketPair + '.txt', 'r+')
         last_fill_dealt_withE = last_fill_file_handleE.readline()
-        print('this is the last order_id dealt with ' + last_fill_dealt_withE)
+        print('this is the last ' + marketPair + ' order_id dealt with ' + last_fill_dealt_withE)
         last_fill_file_handleE.close()
 
         last_order_dealt_withN = last_fill_dealt_withE
 
         requestFills = requests.get(
-            api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
+            api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=' + marketPair, auth=auth)
 
-        print("Fills Request status code is " + str(requestFills.status_code))
+        print(marketPair + ' Fills Request status code is ' + str(requestFills.status_code))
 
         if requestFills.status_code != 200:
             reconCount = 0
             while reconCount < 20:
                 requestFills = requests.get(
-                api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=LTC-USD', auth=auth)
+                api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=' + marketPair, auth=auth)
                 time.sleep(3)
                 reconCount = reconCount + 1
                 if requestFills.status_code == 200:
@@ -970,7 +1038,7 @@ if doWhat == e:
 
             print("This prints when we have an order ID match")
 
-            marketPr = requests.get(api_url + '/products/LTC-USD/ticker')
+            marketPr = requests.get(api_url + '/products/' + marketPair + '/ticker')
 
             time.sleep(1)
 
@@ -980,7 +1048,7 @@ if doWhat == e:
                 reconCount = 0
                 while reconCount < 20:
                     marketPr = requests.get(
-                        api_url + '/products/LTC-USD/ticker')
+                        api_url + '/products/' + marketPair + '/ticker')
                     time.sleep(2)
                     reconCount = reconCount + 1
                     print(marketPr.status_code)
@@ -994,16 +1062,19 @@ if doWhat == e:
             matrixVs['Market Price'] = marketP
 
             if marketP > marketPast:
-                print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.GREEN + str(marketP) + Fore.CYAN
-                      + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+                print(Fore.MAGENTA + 'No ' + marketPair + ' trades, hold tight, market is '
+                      + Fore.GREEN + str(marketP) + Fore.CYAN
+                      + ' ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME' + Fore.WHITE)
 
             elif marketP == marketPast:
-                print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.RESET + str(marketP) + Fore.CYAN
-                      + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+                print(Fore.MAGENTA + 'No ' + marketPair + ' trades, hold tight, market is '
+                      + Fore.RESET + str(marketP) + Fore.CYAN
+                      + ' ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME' + Fore.WHITE)
 
             elif marketP < marketPast:
-                print(Fore.MAGENTA + "No trades, hold tight, market is " + Fore.RED + str(marketP) + Fore.CYAN
-                      + " ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME" + Fore.WHITE)
+                print(Fore.MAGENTA + 'No ' + marketPair + ' trades, hold tight, market is '
+                      + Fore.RED + str(marketP) + Fore.CYAN
+                      + ' ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME' + Fore.WHITE)
 
             marketPast = marketP
 
@@ -1011,7 +1082,7 @@ if doWhat == e:
 
         elif jump[0]['order_id'] != str(last_fill_dealt_withE):
 
-            print("A new order needs to be place!")
+            print('A new order needs to be place!')
 
             jumpCount = 0
 
@@ -1019,32 +1090,33 @@ if doWhat == e:
 
                 fill = jump[jumpCount]
 
-                print("This is number " + str(jumpCount) + " through the jump loop")
+                print('This is number ' + str(jumpCount) + ' through the jump loop')
 
-                print("This is the current order id:")
+                print('This is the current order id:')
                 print(jump[jumpCount]['order_id'])
 
-                print("This is the old order_id:")
+                print('This is the old order_id:')
                 print(str(last_fill_dealt_withE))
 
                 if jumpCount == 0:
                     last_order_dealt_withN = jump[jumpCount]['order_id']
 
-                    print("last_order_dealt_withN just got set to:")
+                    print('last_order_dealt_withN just got set to:')
                     print(last_order_dealt_withN)
 
                     last_order_file_handle3 = open(
-                    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed.txt',
+                    '/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/last_order_id_processed-'
+                    + marketPair + '.txt',
                     'w')
 
                     last_order_file_handle3.write(last_order_dealt_withN)
 
                     last_order_file_handle3.close()
 
-                    print("last_order_id_processed.txt just got set to last_order_dealt_withN:")
+                    print('last_order_id_processed-' + marketPair + '.txt just got set to last_order_dealt_withN:')
                     print(last_order_dealt_withN)
 
-                    print("Previous last_order_id_processed.txt aka str(last_fill_dealt_withE) was:")
+                    print('Previous last_order_id_processed-' + marketPair + '.txt aka str(last_fill_dealt_withE) was:')
 
                     print(str(last_fill_dealt_withE))
 
@@ -1052,12 +1124,12 @@ if doWhat == e:
 
                     print("New order_id is:")
                     print[str(fill['order_id'])]
-                    print("Old order_id aka str(last_fill_dealt_withE) is:")
+                    print('Old order_id aka str(last_fill_dealt_withE) is:')
                     print[str(last_fill_dealt_withE)]
 
                     #figure out how to print the fill index here
 
-                    print("this is the fill:")
+                    print('this is the fill:')
                     pprint(fill)
 
                     eSize = fill['size']
@@ -1161,7 +1233,7 @@ if doWhat == e:
                     #print("This is the order response default print")
                     #print(orderResponse)
 
-                    print("This is the order response pretty print")
+                    print('This is the order response pretty print')
                     pprint(orderResponse)
 
                     jumpCount = jumpCount + 1
@@ -1169,7 +1241,7 @@ if doWhat == e:
             time.sleep(5)
 
             if x is False:
-                print("Big loop break")
+                print('Big loop break')
                 break
 
 
