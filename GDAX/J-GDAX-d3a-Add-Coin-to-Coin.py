@@ -1343,4 +1343,22 @@ Traceback (most recent call last):
     raise ConnectionError(e, request=request)
 requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.gdax.com', port=443): Max retries exceeded with url: /fills?cb-before=194d51c6-28be-4cbd-9010-8cfee22ed6a3&product_id=LTC-BTC (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x1088e8390>: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known',))
 
+No LTC-BTC trades, hold tight, market is 0.0171 ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME
+Entering Prime Loop
+this is the last LTC-BTC order_id dealt with e391a3cc-aef7-4d40-9917-60e10b3ab859
+Traceback (most recent call last):
+  File "./J-GDAX-d3a-Add-Coin-to-Coin.py", line 1020, in <module>
+    api_url + '/fills?cb-before=' + str(last_fill_dealt_withE) + '&product_id=' + marketPair, auth=auth)
+  File "/Library/Python/2.7/site-packages/requests/api.py", line 72, in get
+    return request('get', url, params=params, **kwargs)
+  File "/Library/Python/2.7/site-packages/requests/api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/Library/Python/2.7/site-packages/requests/sessions.py", line 508, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/Library/Python/2.7/site-packages/requests/sessions.py", line 618, in send
+    r = adapter.send(request, **kwargs)
+  File "/Library/Python/2.7/site-packages/requests/adapters.py", line 490, in send
+    raise ConnectionError(err, request=request)
+requests.exceptions.ConnectionError: ('Connection aborted.', error(54, 'Connection reset by peer'))
+
 '''
