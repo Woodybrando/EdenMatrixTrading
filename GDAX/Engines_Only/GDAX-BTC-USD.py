@@ -8,26 +8,6 @@
 #
 #   easy_install requests
 #
-#
-#INDEX
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-
 
 
 import json, hmac, hashlib, time, requests, base64, pickle
@@ -177,6 +157,9 @@ while isTrue == 1:
                   + ' ALL IS GOOD, ALL IS PROTECTED, ALL IN GOOD TIME' + Fore.WHITE)
 
         marketPast = marketP
+
+        print("If Eden is helping u, feel free to help Eden: \n"
+              "LTC Address: LLDNpJ1VF4HJkvpuajbA26rfadQTGTRu2P")
 
         time.sleep(5)
 
@@ -340,6 +323,6 @@ while isTrue == 1:
 
         time.sleep(5)
 
-        if x is False:
-            print('Big loop break')
-            break
+#        if x is False:
+#            print('Big loop break')
+#            break

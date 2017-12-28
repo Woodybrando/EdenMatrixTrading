@@ -1080,6 +1080,9 @@ if doWhat == e:
 
             marketPast = marketP
 
+            print("If Eden is helping u, feel free to help Eden: \n"
+                  "LTC Address: LLDNpJ1VF4HJkvpuajbA26rfadQTGTRu2P")
+
             time.sleep(5)
 
         elif jump[0]['order_id'] != str(last_fill_dealt_withE):
@@ -1242,12 +1245,15 @@ if doWhat == e:
 
             time.sleep(5)
 
+
+
+'''
+
             if x is False:
                 print('Big loop break')
                 break
 
 
-'''
   File "/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/J-GDAX-d2a-New_Matrix_Engine.py", line 1014, in <module>
     newPrice = matrixDict[mdictKey]
 KeyError: u'292.06 sell'

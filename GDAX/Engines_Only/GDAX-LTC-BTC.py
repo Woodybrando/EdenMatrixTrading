@@ -178,6 +178,9 @@ while isTrue == 1:
 
         marketPast = marketP
 
+        print("If Eden is helping u, feel free to help Eden: \n"
+              "LTC Address: LLDNpJ1VF4HJkvpuajbA26rfadQTGTRu2P")
+
         time.sleep(5)
 
     elif jump[0]['order_id'] != str(last_fill_dealt_withE):
@@ -340,6 +343,6 @@ while isTrue == 1:
 
         time.sleep(5)
 
-        if x is False:
-            print('Big loop break')
-            break
+#        if x is False:
+#            print('Big loop break')
+#            break

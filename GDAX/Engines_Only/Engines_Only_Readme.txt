@@ -8,7 +8,6 @@ http://supervisord.org/configuration.html
 
 1. for example this needs to be added to /etc/supervisord.conf
 
-
 [program:EdenMatrixTrading]
 command=/Users/woodybrando/PycharmProjects/EdenMatrixTrading/GDAX/Engines_Only/GDAX-LTC-BTC.py
 autostart=yes

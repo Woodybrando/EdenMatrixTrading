@@ -139,3 +139,6 @@ class poloniex:
 
 
 
+marketPair = input("Which Market Pair do you want to start the rebuy engine in?"
+                   " a. XEM-BTC b. LBRY-BTC c. LTC-XMR d. STEEM-ETH")
+
